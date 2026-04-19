@@ -1,5 +1,6 @@
 {
   "name": "keycache",
+  "productName": "Keycache",
   "version": "2.0.0",
   "description": "Keycache — key-value notes in your menu bar",
   "main": "./out/main/index.js",
