@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Keycache</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <main class="main">
+        <!-- Toolbar: search + add button -->
+        <div class="toolbar">
+          <div class="search-bar">
+            <svg
+              class="search-icon"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input type="text" id="search-input" class="search-input" placeholder="Filter by key" />
+          </div>
+          <button
+            class="icon-btn visibility-btn"
+            id="visibility-btn"
+            aria-label="Hide all values"
+            aria-pressed="false"
+            title="Hide all values"
+          ></button>
+          <button
+            class="icon-btn settings-btn"
+            id="settings-btn"
+            aria-label="Settings"
+            title="Settings"
+          ></button>
+          <button class="btn btn-primary btn-add" id="add-btn" aria-label="New note" title="New note">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+          </button>
+        </div>
+
+        <ul class="notes-list" id="notes-list"></ul>
+
+        <div class="empty-state" id="empty-state" hidden>
+          <svg
+            width="48"
+            height="48"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            opacity="0.3"
+          >
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+            <polyline points="10 9 9 9 8 9" />
+          </svg>
+          <p>No notes yet</p>
+          <span>Add your first key-value note with the button above.</span>
+        </div>
+      </main>
+    </div>
+
+    <!-- Note form modal (add / edit) -->
+    <dialog class="form-dialog" id="form-dialog">
+      <div class="dialog-content">
+        <div class="dialog-header">
+          <h3 id="form-heading">New Note</h3>
+          <button class="icon-btn" id="form-close" aria-label="Close">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        <form id="note-form" class="note-form" autocomplete="off">
+          <input type="hidden" id="edit-id" value="" />
+
+          <div class="field">
+            <label for="key-input">Key</label>
+            <input type="text" id="key-input" placeholder="e.g. API_KEY" required />
+          </div>
+
+          <div class="field">
+            <label for="value-input">Value</label>
+            <textarea id="value-input" placeholder="e.g. sk-abc123..." rows="3" required></textarea>
+          </div>
+
+          <div class="form-error" id="form-error" role="alert" hidden></div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-ghost" id="cancel-btn">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="submit-btn">Add Note</button>
+          </div>
+        </form>
+      </div>
+    </dialog>
+
+    <!-- Delete confirmation dialog -->
+    <dialog class="confirm-dialog" id="confirm-dialog">
+      <div class="dialog-content">
+        <h3>Delete Note</h3>
+        <p>Are you sure you want to delete <strong id="delete-key-name"></strong>?</p>
+        <div class="dialog-actions">
+          <button class="btn btn-ghost" id="dialog-cancel">Cancel</button>
+          <button class="btn btn-danger" id="dialog-confirm" autofocus>Delete</button>
+        </div>
+      </div>
+    </dialog>
+
+    <!-- Settings dialog -->
+    <dialog class="settings-dialog" id="settings-dialog">
+      <div class="dialog-content settings-content">
+        <div class="dialog-header">
+          <h3>Settings</h3>
+          <button class="icon-btn" id="settings-close" aria-label="Close">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="settings-body">
+          <div class="field">
+            <label for="settings-theme">Theme</label>
+            <select id="settings-theme" class="settings-select">
+              <option value="system">System</option>
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="settings-db-path">Database File</label>
+            <div class="settings-path-row">
+              <input type="text" id="settings-db-path" class="settings-path-input" readonly />
+              <button type="button" class="btn btn-ghost btn-sm" id="settings-browse">Browse</button>
+            </div>
+          </div>
+
+          <fieldset class="settings-shortcuts">
+            <legend>Shortcuts</legend>
+            <div class="shortcut-row">
+              <label>Toggle window</label>
+              <input type="text" class="shortcut-input" id="shortcut-global-toggle" readonly data-shortcut="globalToggle" />
+              <button type="button" class="btn-link" data-reset="globalToggle">Reset</button>
+            </div>
+            <div class="shortcut-row">
+              <label>New note</label>
+              <input type="text" class="shortcut-input" id="shortcut-new-note" readonly data-shortcut="newNote" />
+              <button type="button" class="btn-link" data-reset="newNote">Reset</button>
+            </div>
+            <div class="shortcut-row">
+              <label>Focus search</label>
+              <input type="text" class="shortcut-input" id="shortcut-focus-search" readonly data-shortcut="focusSearch" />
+              <button type="button" class="btn-link" data-reset="focusSearch">Reset</button>
+            </div>
+          </fieldset>
+
+          <div class="form-error" id="settings-error" role="alert" hidden></div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" id="settings-cancel">Cancel</button>
+          <button type="button" class="btn btn-primary" id="settings-save">Save</button>
+        </div>
+      </div>
+    </dialog>
+
+    <script type="module" src="./renderer.ts"></script>
+  </body>
+</html>

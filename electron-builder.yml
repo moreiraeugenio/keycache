@@ -1,0 +1,30 @@
+appId: com.keycache.app
+productName: Keycache
+directories:
+  buildResources: resources
+  output: dist
+files:
+  - out/**/*
+  - node_modules/**/*
+  - package.json
+extraResources:
+  - from: resources/trayIconTemplate.png
+    to: trayIconTemplate.png
+  - from: resources/trayIconTemplate@2x.png
+    to: trayIconTemplate@2x.png
+  - from: resources/tray-icon.png
+    to: tray-icon.png
+  - from: resources/tray-icon.ico
+    to: tray-icon.ico
+mac:
+  target:
+    - dmg
+    - zip
+  category: public.app-category.productivity
+win:
+  target:
+    - nsis
+linux:
+  target:
+    - AppImage
+npmRebuild: true
