@@ -81,3 +81,12 @@ tests/
 - **Production paths:** JSON file at `app.getPath('userData')` when packaged (unless overridden by `settings.dbPath` or `KEYCACHE_DB_PATH`), project root in dev. Tray icons at `process.resourcesPath` when packaged (via `extraResources` in `electron-builder.yml`).
 - **Test isolation:** E2E tests set `KEYCACHE_DB_PATH` env var to a temp file per test. Main process respects this override and it takes precedence over `settings.dbPath`.
 - **Coverage:** 100% unit coverage enforced via thresholds in `vitest.config.ts` (scoped to `src/main`).
+
+## Commit Messages
+
+When asked to produce a commit message, follow the convention documented in `README.md` under **Contributing → Commit Message Template**:
+
+- **Format:** `type(optional scope): subject` — e.g. `fix: allow changing db path before first note`.
+- **Type:** one of `build`, `ci`, `chore`, `docs`, `feat`, `fix`, `perf`, `refactor`, `revert`, `style`, `test`.
+- **Subject:** imperative present tense — the line must complete "If applied, this commit will ___". Lowercase first word, no trailing period, ≤50 characters.
+- **Body (when useful):** separated from subject by a blank line, wrapped at 72 characters, imperative mood, explaining *what* and *why* — not *how*.

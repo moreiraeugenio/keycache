@@ -38,3 +38,54 @@ The window starts hidden — look for the Keycache icon in the menu bar / system
 | `npm run format` | Format with Prettier |
 | `npm run package` | Build + package unpacked app to `dist/` |
 | `npm run dist` | Build + create distributable installer to `dist/` |
+
+## Contributing
+
+### Commit Message Template
+
+A properly formed Git commit subject line should always be able to complete the following sentence:
+
+**If applied, this commit will `your subject line here`**
+
+#### Example
+
+`[type](optional scope): [subject]`
+
+#### Type
+
+Must be one of the following:
+
+- build - build related changes
+- ci - CI related changes
+- chore - build process or auxiliary tool changes
+- docs - documentation only changes
+- feat - a new feature
+- fix - a bug fix
+- perf - a code change that improves performance
+- refactor - a code change that neither fixes a bug nor adds a feature
+- revert - reverting things
+- style - markup, white-space, formatting, missing semicolons, etc
+- test - adding missing tests
+
+#### Subject
+
+The subject contains a succinct description of the change:
+
+- Use the imperative, present tense: "change" not "changed" nor "changes"
+- No dot (.) at the end
+
+#### Body
+
+Just as in the subject, use the imperative, present tense: "change", not "changed" nor "changes". The body should include the motivation for the change and contrast this with previous behavior.
+
+#### Rules
+
+The 7 rules of a great commit message:
+
+1. Separate subject from body with a blank line
+2. Limit the subject line to 50 characters
+3. Summary in present tense. Not capitalized
+4. Do not end the subject line with a period
+5. Use the imperative mood in the subject line
+6. Wrap the body at 72 characters
+7. Use the body to explain what and why vs. how
