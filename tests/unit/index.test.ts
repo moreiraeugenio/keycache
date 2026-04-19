@@ -165,6 +165,22 @@ describe('main process (index.ts)', () => {
       expect(mocks.createDatabase).toHaveBeenCalledWith('/tmp/override.json');
     });
 
+    it('env var overrides settings.dbPath', async () => {
+      process.env.KEYCACHE_DB_PATH = '/tmp/override.json';
+      mocks.loadSettings.mockReturnValueOnce({
+        theme: 'system',
+        dbPath: '/some/user/path.json',
+        valuesHidden: false,
+        shortcuts: {
+          globalToggle: 'CmdOrCtrl+Shift+K',
+          newNote: 'CmdOrCtrl+N',
+          focusSearch: 'CmdOrCtrl+F',
+        },
+      });
+      await importMain();
+      expect(mocks.createDatabase).toHaveBeenCalledWith('/tmp/override.json');
+    });
+
     it('uses appPath in dev mode', async () => {
       await importMain();
       expect(mocks.createDatabase).toHaveBeenCalledWith(

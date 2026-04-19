@@ -27,6 +27,7 @@ function getSettingsPath(): string {
 }
 
 function effectiveDbPath(settings: AppSettings): string {
+  if (process.env.KEYCACHE_DB_PATH) return process.env.KEYCACHE_DB_PATH;
   return settings.dbPath || getDbPath();
 }
 
