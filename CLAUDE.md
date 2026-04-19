@@ -64,7 +64,7 @@ tests/
 ## Key Details
 
 - **Storage:** Notes stored as JSON file (default `keycache.json`). All CRUD operates in-memory; file is written on every mutation. `createDatabase(filePath)` returns a `NotesDb` interface. Handles missing/corrupted files gracefully (starts empty). The `DbHolder.current` reference in `ipc.ts` is swapped — not re-registered — when the user changes the DB path at runtime.
-- **Settings:** Persisted to `app.getPath('userData')/settings.json` on all platforms. `AppSettings` = `{ theme, dbPath, shortcuts: { globalToggle, newNote, focusSearch } }`. Atomic write (`.tmp` + `rename`). `loadSettings` merges partial/corrupted files with defaults. `moveDbFile` prefers `rename`, falls back to `copyFileSync` + `unlinkSync` on cross-device errors (`EXDEV`).
+- **Settings:** Persisted to `app.getPath('userData')/settings.json` on all platforms. `AppSettings` = `{ theme, dbPath, valuesHidden, shortcuts: { globalToggle, newNote, focusSearch } }`. Atomic write (`.tmp` + `rename`). `loadSettings` merges partial/corrupted files with defaults. `moveDbFile` prefers `rename`, falls back to `copyFileSync` + `unlinkSync` on cross-device errors (`EXDEV`).
 - **Tray app pattern:** Window starts hidden (`show: false`), `skipTaskbar: true`. Clicking the tray icon or pressing the configured global shortcut toggles the popup. Window auto-hides on blur and on Escape (via `webContents.on('before-input-event')`) unless a `<dialog>` modal is open (coordinated via `window:dialog-open` IPC).
 - **Tray menu:** Right-click shows `Settings / — / About Keycache / Quit Keycache`. Settings shows the window and sends `settings:open` to the renderer. About calls `app.showAboutPanel()` on macOS, `dialog.showMessageBox()` elsewhere (panel configured via `app.setAboutPanelOptions`).
 - **IPC channels:**
@@ -73,7 +73,7 @@ tests/
   - Main → renderer `webContents.send`: `settings:theme-changed`, `settings:shortcuts-changed`, `settings:open`.
 - **Keyboard UX:** Arrow ↑/↓ in the search input navigates the filtered list; Enter copies the selected value to clipboard and hides the window. Escape closes whichever dialog is open (confirm > form). Tab is swallowed outside dialogs (to keep focus on search). `newNote` / `focusSearch` bindings live-update on save via `updateKeyBindings`.
 - **Theming:** Renderer sets `data-theme="light" | "dark"` on `<html>`. In `system` mode it resolves from `matchMedia('(prefers-color-scheme: dark)')` and listens for changes. Theme applied on startup and whenever main broadcasts `settings:theme-changed`.
-- **Value masking:** Per-user "hide all values" toggle. Persisted in `localStorage` under `keycache-values-hidden`. Masked values render as `••••••••` with a `.masked` class.
+- **Value masking:** Per-user "hide all values" toggle. Persisted in `settings.json` as `valuesHidden`. Masked values render as `••••••••` with a `.masked` class.
 - **Paste sanitization:** Pasting multi-line text into the value textarea collapses `\r\n|\r|\n` runs to single spaces, preserving selection range.
 - **Window positioning:** `getWindowPosition()` in `window.ts` handles macOS (below menu bar), Windows (above bottom taskbar or below top taskbar), Linux (bottom-right fallback), with screen edge clamping.
 - **Platform handling:** macOS: `app.dock.hide()`, template icon for auto dark/light. Windows: `.ico` icon, `skipTaskbar: true`. Linux: `.png` icon.

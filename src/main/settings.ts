@@ -4,6 +4,7 @@ import path from 'path';
 export interface AppSettings {
   theme: 'system' | 'light' | 'dark';
   dbPath: string;
+  valuesHidden: boolean;
   shortcuts: {
     globalToggle: string;
     newNote: string;
@@ -15,6 +16,7 @@ export function getDefaultSettings(): AppSettings {
   return {
     theme: 'system',
     dbPath: '',
+    valuesHidden: false,
     shortcuts: {
       globalToggle: 'CmdOrCtrl+Shift+K',
       newNote: 'CmdOrCtrl+N',

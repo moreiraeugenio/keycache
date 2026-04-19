@@ -110,6 +110,7 @@ vi.mock('../../src/main/settings', () => ({
   loadSettings: mocks.loadSettings.mockImplementation(() => ({
     theme: 'system',
     dbPath: '',
+    valuesHidden: false,
     shortcuts: {
       globalToggle: 'CmdOrCtrl+Shift+K',
       newNote: 'CmdOrCtrl+N',
@@ -121,6 +122,7 @@ vi.mock('../../src/main/settings', () => ({
   getDefaultSettings: vi.fn().mockReturnValue({
     theme: 'system',
     dbPath: '',
+    valuesHidden: false,
     shortcuts: {
       globalToggle: 'CmdOrCtrl+Shift+K',
       newNote: 'CmdOrCtrl+N',

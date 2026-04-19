@@ -24,6 +24,7 @@ describe('getDefaultSettings', () => {
     const defaults = getDefaultSettings();
     expect(defaults.theme).toBe('system');
     expect(defaults.dbPath).toBe('');
+    expect(defaults.valuesHidden).toBe(false);
     expect(defaults.shortcuts.globalToggle).toBe('CmdOrCtrl+Shift+K');
     expect(defaults.shortcuts.newNote).toBe('CmdOrCtrl+N');
     expect(defaults.shortcuts.focusSearch).toBe('CmdOrCtrl+F');
@@ -49,7 +50,15 @@ describe('loadSettings', () => {
     const settings = loadSettings(filePath);
     expect(settings.theme).toBe('dark');
     expect(settings.dbPath).toBe('');
+    expect(settings.valuesHidden).toBe(false);
     expect(settings.shortcuts).toEqual(getDefaultSettings().shortcuts);
+  });
+
+  it('preserves stored valuesHidden when present', () => {
+    const filePath = path.join(tmpDir, 'settings.json');
+    fs.writeFileSync(filePath, JSON.stringify({ valuesHidden: true }), 'utf-8');
+    const settings = loadSettings(filePath);
+    expect(settings.valuesHidden).toBe(true);
   });
 
   it('merges partial shortcuts with defaults', () => {
@@ -70,6 +79,7 @@ describe('loadSettings', () => {
     const stored = {
       theme: 'light' as const,
       dbPath: '/custom/path.json',
+      valuesHidden: true,
       shortcuts: {
         globalToggle: 'CmdOrCtrl+Shift+J',
         newNote: 'CmdOrCtrl+M',

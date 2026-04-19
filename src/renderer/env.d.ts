@@ -9,6 +9,7 @@ interface Note {
 interface AppSettings {
   theme: 'system' | 'light' | 'dark';
   dbPath: string;
+  valuesHidden: boolean;
   shortcuts: {
     globalToggle: string;
     newNote: string;

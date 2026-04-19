@@ -343,7 +343,7 @@ const visibilityIcons = {
   eyeOff: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`,
 };
 
-let valuesHidden = localStorage.getItem('keycache-values-hidden') === '1';
+let valuesHidden = false;
 
 function applyVisibility(): void {
   visibilityBtn.innerHTML = valuesHidden ? visibilityIcons.eyeOff : visibilityIcons.eye;
@@ -353,14 +353,7 @@ function applyVisibility(): void {
   visibilityBtn.setAttribute('aria-label', label);
 }
 
-applyVisibility();
-
-visibilityBtn.addEventListener('click', () => {
-  valuesHidden = !valuesHidden;
-  localStorage.setItem('keycache-values-hidden', valuesHidden ? '1' : '0');
-  applyVisibility();
-  searchInput.focus();
-
+function applyMaskToRows(): void {
   const notes = getVisibleNotes();
   notesList.querySelectorAll<HTMLSpanElement>('.note-value').forEach((el, i) => {
     const note = notes[i];
@@ -372,6 +365,18 @@ visibilityBtn.addEventListener('click', () => {
       el.classList.remove('masked');
     }
   });
+}
+
+applyVisibility();
+
+visibilityBtn.addEventListener('click', async () => {
+  valuesHidden = !valuesHidden;
+  applyVisibility();
+  applyMaskToRows();
+  searchInput.focus();
+
+  const settings = await window.api.getSettings();
+  await window.api.saveSettings({ ...settings, valuesHidden });
 });
 
 // ---- Init ----
@@ -389,4 +394,10 @@ registerShortcuts({
 });
 
 initSettingsListeners();
-refreshNotes();
+
+(async () => {
+  const settings = await window.api.getSettings();
+  valuesHidden = settings.valuesHidden;
+  applyVisibility();
+  await refreshNotes();
+})();
