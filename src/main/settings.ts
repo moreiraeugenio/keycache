@@ -56,12 +56,14 @@ export function moveDbFile(
   newPath: string,
 ): { ok: boolean; error?: string } {
   if (oldPath === newPath) return { ok: true };
+  if (!fs.existsSync(oldPath)) return { ok: true };
   if (fs.existsSync(newPath)) {
     return { ok: false, error: 'Target file already exists' };
   }
   try {
     fs.renameSync(oldPath, newPath);
-  } catch {
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== 'EXDEV') throw err;
     fs.copyFileSync(oldPath, newPath);
     fs.unlinkSync(oldPath);
   }

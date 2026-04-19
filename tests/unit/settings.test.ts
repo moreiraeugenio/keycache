@@ -121,6 +121,13 @@ describe('moveDbFile', () => {
     expect(moveDbFile(p, p)).toEqual({ ok: true });
   });
 
+  it('returns ok when source does not exist (no-op)', () => {
+    const src = path.join(tmpDir, 'missing.json');
+    const dst = path.join(tmpDir, 'dst.json');
+    expect(moveDbFile(src, dst)).toEqual({ ok: true });
+    expect(fs.existsSync(dst)).toBe(false);
+  });
+
   it('moves file to new path', () => {
     const src = path.join(tmpDir, 'src.json');
     const dst = path.join(tmpDir, 'dst.json');
@@ -158,6 +165,27 @@ describe('moveDbFile', () => {
       expect(result).toEqual({ ok: true });
       expect(fs.existsSync(src)).toBe(false);
       expect(fs.readFileSync(dst, 'utf-8')).toBe('{"cross":true}');
+    } finally {
+      fs.renameSync = origRename;
+    }
+  });
+
+  it('rethrows non-EXDEV rename errors', () => {
+    const src = path.join(tmpDir, 'src.json');
+    const dst = path.join(tmpDir, 'dst.json');
+    fs.writeFileSync(src, '{}');
+
+    const origRename = fs.renameSync;
+    fs.renameSync = () => {
+      const err = new Error('EACCES') as NodeJS.ErrnoException;
+      err.code = 'EACCES';
+      throw err;
+    };
+
+    try {
+      expect(() => moveDbFile(src, dst)).toThrow(/EACCES/);
+      expect(fs.existsSync(src)).toBe(true);
+      expect(fs.existsSync(dst)).toBe(false);
     } finally {
       fs.renameSync = origRename;
     }
