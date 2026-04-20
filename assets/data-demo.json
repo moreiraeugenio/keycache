@@ -1,0 +1,40 @@
+{
+  "nextId": 6,
+  "notes": [
+    {
+      "id": 1,
+      "note_key": "github-token",
+      "note_value": "ghp_aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789",
+      "created_at": "2026-04-10 08:15:22",
+      "updated_at": "2026-04-10 08:15:22"
+    },
+    {
+      "id": 2,
+      "note_key": "stripe-secret",
+      "note_value": "sk_test_4eC39HqLyjWDarjtT1zdp7dcFAKE",
+      "created_at": "2026-04-12 16:33:40",
+      "updated_at": "2026-04-12 16:33:40"
+    },
+    {
+      "id": 3,
+      "note_key": "aws-access-key",
+      "note_value": "AKIAIOSFODNN7EXAMPLE",
+      "created_at": "2026-04-14 11:02:55",
+      "updated_at": "2026-04-14 11:02:55"
+    },
+    {
+      "id": 4,
+      "note_key": "openai-api-key",
+      "note_value": "sk-proj-abcd1234example5678faketoken9012",
+      "created_at": "2026-04-16 09:41:17",
+      "updated_at": "2026-04-16 09:41:17"
+    },
+    {
+      "id": 5,
+      "note_key": "notion-integration",
+      "note_value": "secret_aBcDeFgHiJkLmNoPqRsTuVwXyZ",
+      "created_at": "2026-04-18 14:22:03",
+      "updated_at": "2026-04-18 14:22:03"
+    }
+  ]
+}
