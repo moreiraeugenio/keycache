@@ -45,27 +45,41 @@ The window starts hidden — look for the Keycache icon in the menu bar / system
 
 Releases are built and published via GitHub Actions (`.github/workflows/release.yml`). The workflow produces **unsigned** artifacts for macOS (`.dmg` + `.zip`), Windows (`.exe`), and Linux (`.AppImage`).
 
-### Cutting the first release
+### Cutting a release
 
-`package.json` starts at `0.0.0` (nothing has shipped yet). The first release will be **`v0.0.1`**:
+1. Verify your local Node matches `.nvmrc` (run `nvm use` / `fnm use` if not):
 
-```bash
-node --version                                # must match .nvmrc (24.15.0)
-npm ci && npm run lint && npm run test && npm run build
-npm version patch -m "chore: release v%s"    # 0.0.0 → 0.0.1, commits, tags v0.0.1
-git push origin main
-git push --tags
-```
+   ```bash
+   node --version
+   ```
 
-Pushing the `v0.0.1` tag triggers the workflow. Each of the three OS runners builds its native artifacts in parallel on `macos-latest` / `windows-latest` / `ubuntu-latest`; a final job collects them and creates a **draft** GitHub Release with auto-generated notes. Review the draft on the Releases page and publish manually.
+2. Run local sanity checks:
 
-### Subsequent releases
+   ```bash
+   npm ci
+   npm run lint && npm run test && npm run build
+   ```
 
-Same flow, different bump level:
+3. Bump the version and tag. Pick the level per [semver](https://semver.org):
 
-- **Patch** (bugfix): `npm version patch` → `0.0.2`
-- **Minor** (first feature milestone or later): `npm version minor` → `0.1.0`
-- **Major** (breaking change or first stable release): `npm version major` → `1.0.0`
+   ```bash
+   npm version <patch|minor|major> -m "chore: release v%s"
+   ```
+
+   - **patch** — bugfix, no behavior change
+   - **minor** — new feature, backwards-compatible
+   - **major** — breaking change
+
+   `npm version` bumps `package.json`, creates a commit with that message, and creates an annotated `v<x.y.z>` tag on that commit.
+
+4. Push the commit and tag:
+
+   ```bash
+   git push origin main
+   git push --tags
+   ```
+
+Pushing the `v*` tag triggers the workflow. Each of the three OS runners builds its native artifacts in parallel on `macos-latest` / `windows-latest` / `ubuntu-latest`; a final job collects them and creates a **draft** GitHub Release with auto-generated notes. Review the draft on the Releases page and publish manually.
 
 ### Manual build (no release)
 
