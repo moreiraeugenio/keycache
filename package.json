@@ -42,5 +42,5 @@
     "vitest": "^4.1.4"
   },
   "keywords": [],
-  "license": "ISC"
+  "license": "GPL-3.0-or-later"
 }
