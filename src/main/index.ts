@@ -17,13 +17,16 @@ function getDataFilePath(): string {
     return process.env.KEYCACHE_DATA_FILE_PATH;
   }
   if (app.isPackaged) {
-    return path.join(app.getPath('userData'), 'keycache.json');
+    return path.join(app.getPath('userData'), 'data.json');
   }
-  return path.join(app.getAppPath(), 'keycache.json');
+  return path.join(app.getAppPath(), 'data.json');
 }
 
 function getSettingsPath(): string {
-  return path.join(app.getPath('userData'), 'settings.json');
+  if (app.isPackaged) {
+    return path.join(app.getPath('userData'), 'settings.json');
+  }
+  return path.join(app.getAppPath(), 'settings.json');
 }
 
 function effectiveDataFilePath(settings: AppSettings): string {

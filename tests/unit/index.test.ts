@@ -182,18 +182,35 @@ describe('main process (index.ts)', () => {
       expect(mocks.createNotesStore).toHaveBeenCalledWith('/tmp/override.json');
     });
 
-    it('uses appPath in dev mode', async () => {
+    it('uses appPath with data.json in dev mode', async () => {
       await importMain();
       expect(mocks.createNotesStore).toHaveBeenCalledWith(
-        expect.stringContaining('/mock/appPath'),
+        expect.stringMatching(/\/mock\/appPath\/data\.json$/),
+      );
+    });
+
+    it('uses userData with data.json when packaged', async () => {
+      mocks.isPackaged = true;
+      await importMain();
+      expect(mocks.createNotesStore).toHaveBeenCalledWith(
+        expect.stringMatching(/\/mock\/userData\/data\.json$/),
+      );
+    });
+  });
+
+  describe('getSettingsPath', () => {
+    it('uses appPath in dev mode', async () => {
+      await importMain();
+      expect(mocks.loadSettings).toHaveBeenCalledWith(
+        expect.stringMatching(/\/mock\/appPath\/settings\.json$/),
       );
     });
 
     it('uses userData when packaged', async () => {
       mocks.isPackaged = true;
       await importMain();
-      expect(mocks.createNotesStore).toHaveBeenCalledWith(
-        expect.stringContaining('/mock/userData'),
+      expect(mocks.loadSettings).toHaveBeenCalledWith(
+        expect.stringMatching(/\/mock\/userData\/settings\.json$/),
       );
     });
   });

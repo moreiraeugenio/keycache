@@ -1,5 +1,7 @@
 coverage/
+data.json
 dist/
 node_modules/
 out/
+settings.json
 test-results/

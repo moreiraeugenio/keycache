@@ -63,8 +63,8 @@ tests/
 
 ## Key Details
 
-- **Storage:** Notes stored as JSON file (default `keycache.json`). All CRUD operates in-memory; file is written on every mutation. `createNotesStore(filePath)` returns a `NotesStore` interface. Handles missing/corrupted files gracefully (starts empty). The `NotesStoreHolder.current` reference in `ipc.ts` is swapped — not re-registered — when the user changes the data file path at runtime.
-- **Settings:** Persisted to `app.getPath('userData')/settings.json` on all platforms. `AppSettings` = `{ theme, dataFilePath, valuesHidden, shortcuts: { globalToggle, newNote, focusSearch } }`. Atomic write (`.tmp` + `rename`). `loadSettings` merges partial/corrupted files with defaults. `moveDataFile` prefers `rename`, falls back to `copyFileSync` + `unlinkSync` on cross-device errors (`EXDEV`).
+- **Storage:** Notes stored as JSON file (default `data.json`). All CRUD operates in-memory; file is written on every mutation. `createNotesStore(filePath)` returns a `NotesStore` interface. Handles missing/corrupted files gracefully (starts empty). The `NotesStoreHolder.current` reference in `ipc.ts` is swapped — not re-registered — when the user changes the data file path at runtime.
+- **Settings:** Persisted next to the data file: `app.getAppPath()/settings.json` in dev, `app.getPath('userData')/settings.json` when packaged. `AppSettings` = `{ theme, dataFilePath, valuesHidden, shortcuts: { globalToggle, newNote, focusSearch } }`. Atomic write (`.tmp` + `rename`). `loadSettings` merges partial/corrupted files with defaults. `moveDataFile` prefers `rename`, falls back to `copyFileSync` + `unlinkSync` on cross-device errors (`EXDEV`).
 - **Tray app pattern:** Window starts hidden (`show: false`), `skipTaskbar: true`. Clicking the tray icon or pressing the configured global shortcut toggles the popup. Window auto-hides on blur and on Escape (via `webContents.on('before-input-event')`) unless a `<dialog>` modal is open (coordinated via `window:dialog-open` IPC).
 - **Tray menu:** Right-click shows `Settings / — / About Keycache / Quit Keycache`. Settings shows the window and sends `settings:open` to the renderer. About calls `app.showAboutPanel()` on macOS, `dialog.showMessageBox()` elsewhere (panel configured via `app.setAboutPanelOptions`).
 - **IPC channels:**
@@ -78,7 +78,7 @@ tests/
 - **Window positioning:** `getWindowPosition()` in `window.ts` handles macOS (below menu bar), Windows (above bottom taskbar or below top taskbar), Linux (bottom-right fallback), with screen edge clamping.
 - **Platform handling:** macOS: `app.dock.hide()`, template icon for auto dark/light. Windows: `.ico` icon, `skipTaskbar: true`. Linux: `.png` icon.
 - **Close intercept:** Window `close` event is intercepted with `preventDefault()` + `hide()`. Only `app.quit()` (from tray menu or `before-quit` flag) actually closes. `will-quit` unregisters shortcuts and closes the notes store.
-- **Production paths:** JSON file at `app.getPath('userData')` when packaged (unless overridden by `settings.dataFilePath` or `KEYCACHE_DATA_FILE_PATH`), project root in dev. Tray icons at `process.resourcesPath` when packaged (via `extraResources` in `electron-builder.yml`).
+- **Production paths:** Data and settings JSON files at `app.getPath('userData')` when packaged (data file overridable via `settings.dataFilePath` or `KEYCACHE_DATA_FILE_PATH`), `app.getAppPath()` (repo root) in dev. Tray icons at `process.resourcesPath` when packaged (via `extraResources` in `electron-builder.yml`).
 - **Test isolation:** E2E tests set `KEYCACHE_DATA_FILE_PATH` env var to a temp file per test. Main process respects this override and it takes precedence over `settings.dataFilePath`.
 - **Coverage:** 100% unit coverage enforced via thresholds in `vitest.config.ts` (scoped to `src/main`).
 
