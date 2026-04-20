@@ -25,7 +25,7 @@ const mockTray = {
 
 const mocks = vi.hoisted(() => ({
   isPackaged: false,
-  createDatabase: vi.fn().mockImplementation(() => ({
+  createNotesStore: vi.fn().mockImplementation(() => ({
     getNotes: vi.fn(),
     addNote: vi.fn(),
     updateNote: vi.fn(),
@@ -44,7 +44,7 @@ const mocks = vi.hoisted(() => ({
   quit: vi.fn(),
   loadSettings: vi.fn(),
   saveSettings: vi.fn(),
-  moveDbFile: vi.fn(),
+  moveDataFile: vi.fn(),
 }));
 
 vi.mock('electron', () => ({
@@ -82,8 +82,8 @@ vi.mock('electron', () => ({
   },
 }));
 
-vi.mock('../../src/main/db', () => ({
-  createDatabase: mocks.createDatabase,
+vi.mock('../../src/main/store', () => ({
+  createNotesStore: mocks.createNotesStore,
 }));
 
 vi.mock('../../src/main/ipc', () => ({
@@ -109,7 +109,7 @@ vi.mock('../../src/main/shortcuts', () => ({
 vi.mock('../../src/main/settings', () => ({
   loadSettings: mocks.loadSettings.mockImplementation(() => ({
     theme: 'system',
-    dbPath: '',
+    dataFilePath: '',
     valuesHidden: false,
     shortcuts: {
       globalToggle: 'CmdOrCtrl+Shift+K',
@@ -118,10 +118,10 @@ vi.mock('../../src/main/settings', () => ({
     },
   })),
   saveSettings: mocks.saveSettings,
-  moveDbFile: mocks.moveDbFile.mockReturnValue({ ok: true }),
+  moveDataFile: mocks.moveDataFile.mockReturnValue({ ok: true }),
   getDefaultSettings: vi.fn().mockReturnValue({
     theme: 'system',
-    dbPath: '',
+    dataFilePath: '',
     valuesHidden: false,
     shortcuts: {
       globalToggle: 'CmdOrCtrl+Shift+K',
@@ -148,7 +148,7 @@ describe('main process (index.ts)', () => {
     Object.keys(eventHandlers).forEach((k) => delete eventHandlers[k]);
     Object.keys(winEventHandlers).forEach((k) => delete winEventHandlers[k]);
     Object.keys(ipcHandlers).forEach((k) => delete ipcHandlers[k]);
-    delete process.env.KEYCACHE_DB_PATH;
+    delete process.env.KEYCACHE_DATA_FILE_PATH;
   });
 
   afterEach(() => {
@@ -159,17 +159,17 @@ describe('main process (index.ts)', () => {
   // -- Path resolution --
 
   describe('getDbPath', () => {
-    it('uses KEYCACHE_DB_PATH env var when set', async () => {
-      process.env.KEYCACHE_DB_PATH = '/tmp/override.json';
+    it('uses KEYCACHE_DATA_FILE_PATH env var when set', async () => {
+      process.env.KEYCACHE_DATA_FILE_PATH = '/tmp/override.json';
       await importMain();
-      expect(mocks.createDatabase).toHaveBeenCalledWith('/tmp/override.json');
+      expect(mocks.createNotesStore).toHaveBeenCalledWith('/tmp/override.json');
     });
 
-    it('env var overrides settings.dbPath', async () => {
-      process.env.KEYCACHE_DB_PATH = '/tmp/override.json';
+    it('env var overrides settings.dataFilePath', async () => {
+      process.env.KEYCACHE_DATA_FILE_PATH = '/tmp/override.json';
       mocks.loadSettings.mockReturnValueOnce({
         theme: 'system',
-        dbPath: '/some/user/path.json',
+        dataFilePath: '/some/user/path.json',
         valuesHidden: false,
         shortcuts: {
           globalToggle: 'CmdOrCtrl+Shift+K',
@@ -178,12 +178,12 @@ describe('main process (index.ts)', () => {
         },
       });
       await importMain();
-      expect(mocks.createDatabase).toHaveBeenCalledWith('/tmp/override.json');
+      expect(mocks.createNotesStore).toHaveBeenCalledWith('/tmp/override.json');
     });
 
     it('uses appPath in dev mode', async () => {
       await importMain();
-      expect(mocks.createDatabase).toHaveBeenCalledWith(
+      expect(mocks.createNotesStore).toHaveBeenCalledWith(
         expect.stringContaining('/mock/appPath'),
       );
     });
@@ -191,7 +191,7 @@ describe('main process (index.ts)', () => {
     it('uses userData when packaged', async () => {
       mocks.isPackaged = true;
       await importMain();
-      expect(mocks.createDatabase).toHaveBeenCalledWith(
+      expect(mocks.createNotesStore).toHaveBeenCalledWith(
         expect.stringContaining('/mock/userData'),
       );
     });
@@ -199,18 +199,18 @@ describe('main process (index.ts)', () => {
 
   // -- Initialization --
 
-  it('loads settings and creates database on import', async () => {
+  it('loads settings and creates notes store on import', async () => {
     await importMain();
     expect(mocks.loadSettings).toHaveBeenCalledTimes(1);
-    expect(mocks.createDatabase).toHaveBeenCalledTimes(1);
+    expect(mocks.createNotesStore).toHaveBeenCalledTimes(1);
     expect(mocks.registerIpc).toHaveBeenCalledTimes(1);
   });
 
-  it('passes db holder to registerIpcHandlers', async () => {
+  it('passes store holder to registerIpcHandlers', async () => {
     await importMain();
     const holder = mocks.registerIpc.mock.calls[0][0];
     expect(holder).toHaveProperty('current');
-    expect(holder.current).toBe(mocks.createDatabase.mock.results[0].value);
+    expect(holder.current).toBe(mocks.createNotesStore.mock.results[0].value);
   });
 
   // -- whenReady --
@@ -324,16 +324,16 @@ describe('main process (index.ts)', () => {
       whenReadyCb!();
       expect(ipcHandlers['settings:get']).toBeDefined();
       expect(ipcHandlers['settings:save']).toBeDefined();
-      expect(ipcHandlers['settings:browse-db-path']).toBeDefined();
+      expect(ipcHandlers['settings:browse-data-file-path']).toBeDefined();
     });
 
-    it('settings:get returns effective settings with dbPath filled in', async () => {
+    it('settings:get returns effective settings with dataFilePath filled in', async () => {
       await importMain();
       whenReadyCb!();
       const result = ipcHandlers['settings:get']();
       expect(result).toHaveProperty('theme', 'system');
-      expect(result).toHaveProperty('dbPath');
-      expect((result as { dbPath: string }).dbPath).not.toBe('');
+      expect(result).toHaveProperty('dataFilePath');
+      expect((result as { dataFilePath: string }).dataFilePath).not.toBe('');
     });
 
     it('intercepts window close to hide instead of destroy', async () => {
@@ -379,12 +379,12 @@ describe('main process (index.ts)', () => {
       expect(mockPreventDefault).not.toHaveBeenCalled();
     });
 
-    it('will-quit unregisters shortcuts and closes db', async () => {
+    it('will-quit unregisters shortcuts and closes store', async () => {
       await importMain();
       eventHandlers['will-quit']();
       expect(mocks.unregisterShortcuts).toHaveBeenCalled();
-      const db = mocks.createDatabase.mock.results[0].value;
-      expect(db.close).toHaveBeenCalled();
+      const store = mocks.createNotesStore.mock.results[0].value;
+      expect(store.close).toHaveBeenCalled();
     });
   });
 });

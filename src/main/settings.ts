@@ -3,7 +3,7 @@ import path from 'path';
 
 export interface AppSettings {
   theme: 'system' | 'light' | 'dark';
-  dbPath: string;
+  dataFilePath: string;
   valuesHidden: boolean;
   shortcuts: {
     globalToggle: string;
@@ -15,7 +15,7 @@ export interface AppSettings {
 export function getDefaultSettings(): AppSettings {
   return {
     theme: 'system',
-    dbPath: '',
+    dataFilePath: '',
     valuesHidden: false,
     shortcuts: {
       globalToggle: 'CmdOrCtrl+Shift+K',
@@ -51,7 +51,7 @@ export function saveSettings(filePath: string, settings: AppSettings): void {
   fs.renameSync(tmp, filePath);
 }
 
-export function moveDbFile(
+export function moveDataFile(
   oldPath: string,
   newPath: string,
 ): { ok: boolean; error?: string } {

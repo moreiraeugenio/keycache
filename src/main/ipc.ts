@@ -1,15 +1,17 @@
 import { ipcMain } from 'electron';
-import type { NotesDb } from './db';
+import type { NotesStore } from './store';
 
-export interface DbHolder {
-  current: NotesDb;
+export interface NotesStoreHolder {
+  current: NotesStore;
 }
 
-export function registerIpcHandlers(db: DbHolder): void {
-  ipcMain.handle('notes:getAll', () => db.current.getNotes());
-  ipcMain.handle('notes:add', (_e, key: string, value: string) => db.current.addNote(key, value));
-  ipcMain.handle('notes:update', (_e, id: number, key: string, value: string) =>
-    db.current.updateNote(id, key, value),
+export function registerIpcHandlers(store: NotesStoreHolder): void {
+  ipcMain.handle('notes:getAll', () => store.current.getNotes());
+  ipcMain.handle('notes:add', (_e, key: string, value: string) =>
+    store.current.addNote(key, value),
   );
-  ipcMain.handle('notes:delete', (_e, id: number) => db.current.deleteNote(id));
+  ipcMain.handle('notes:update', (_e, id: number, key: string, value: string) =>
+    store.current.updateNote(id, key, value),
+  );
+  ipcMain.handle('notes:delete', (_e, id: number) => store.current.deleteNote(id));
 }

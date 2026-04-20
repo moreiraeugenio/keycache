@@ -6,7 +6,9 @@ const settingsCancelBtn = document.getElementById('settings-cancel') as HTMLButt
 const settingsSaveBtn = document.getElementById('settings-save') as HTMLButtonElement;
 const settingsBrowseBtn = document.getElementById('settings-browse') as HTMLButtonElement;
 const themeSelect = document.getElementById('settings-theme') as HTMLSelectElement;
-const dbPathInput = document.getElementById('settings-db-path') as HTMLInputElement;
+const dataFilePathInput = document.getElementById(
+  'settings-data-file-path',
+) as HTMLInputElement;
 const settingsError = document.getElementById('settings-error') as HTMLDivElement;
 
 const shortcutInputs = {
@@ -61,7 +63,7 @@ function clearError(): void {
 
 function populateForm(settings: AppSettings): void {
   themeSelect.value = settings.theme;
-  dbPathInput.value = settings.dbPath;
+  dataFilePathInput.value = settings.dataFilePath;
   for (const [key, input] of Object.entries(shortcutInputs)) {
     const accel = settings.shortcuts[key as keyof AppSettings['shortcuts']];
     input.value = formatAccelerator(accel);
@@ -72,7 +74,7 @@ function populateForm(settings: AppSettings): void {
 function readForm(): AppSettings {
   return {
     theme: themeSelect.value as AppSettings['theme'],
-    dbPath: dbPathInput.value,
+    dataFilePath: dataFilePathInput.value,
     shortcuts: {
       globalToggle: shortcutInputs.globalToggle.dataset.accel || defaults.globalToggle,
       newNote: shortcutInputs.newNote.dataset.accel || defaults.newNote,
@@ -103,8 +105,8 @@ settingsDialog.addEventListener('click', (e) => {
 });
 
 settingsBrowseBtn.addEventListener('click', async () => {
-  const path = await window.api.browseDbPath();
-  if (path) dbPathInput.value = path;
+  const path = await window.api.browseDataFilePath();
+  if (path) dataFilePathInput.value = path;
 });
 
 settingsSaveBtn.addEventListener('click', async () => {

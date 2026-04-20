@@ -8,19 +8,19 @@ const projectRoot = path.join(__dirname, '..', '..');
 
 let app: ElectronApplication;
 let page: Page;
-let testDbPath: string;
+let testDataFilePath: string;
 
 test.beforeEach(async () => {
-  // Create an isolated temp DB for each test
+  // Create an isolated temp data file for each test
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'keycache-e2e-'));
-  testDbPath = path.join(tmpDir, 'notes.json');
+  testDataFilePath = path.join(tmpDir, 'notes.json');
 
   app = await electron.launch({
     args: [projectRoot],
     env: {
       ...process.env,
       NODE_ENV: 'test',
-      KEYCACHE_DB_PATH: testDbPath,
+      KEYCACHE_DATA_FILE_PATH: testDataFilePath,
     },
   });
   page = await app.firstWindow();
@@ -34,8 +34,8 @@ test.beforeEach(async () => {
 
 test.afterEach(async () => {
   await app.close();
-  // Clean up temp DB files
-  const tmpDir = path.dirname(testDbPath);
+  // Clean up temp data file
+  const tmpDir = path.dirname(testDataFilePath);
   fs.rmSync(tmpDir, { recursive: true, force: true });
 });
 

@@ -11,7 +11,7 @@ contextBridge.exposeInMainWorld('api', {
 
   getSettings: () => ipcRenderer.invoke('settings:get'),
   saveSettings: (s: unknown) => ipcRenderer.invoke('settings:save', s),
-  browseDbPath: () => ipcRenderer.invoke('settings:browse-db-path'),
+  browseDataFilePath: () => ipcRenderer.invoke('settings:browse-data-file-path'),
   onThemeChanged: (cb: (theme: string) => void) =>
     ipcRenderer.on('settings:theme-changed', (_e, theme) => cb(theme)),
   onShortcutsChanged: (cb: (shortcuts: unknown) => void) =>

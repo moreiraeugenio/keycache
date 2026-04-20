@@ -13,7 +13,7 @@ interface StoreData {
   notes: Note[];
 }
 
-export interface NotesDb {
+export interface NotesStore {
   getNotes(): Note[];
   addNote(key: string, value: string): number;
   updateNote(id: number, key: string, value: string): void;
@@ -38,7 +38,7 @@ function nowISO(): string {
   return new Date().toISOString().replace('T', ' ').replace('Z', '').slice(0, 19);
 }
 
-export function createDatabase(filePath: string): NotesDb {
+export function createNotesStore(filePath: string): NotesStore {
   const data = load(filePath);
 
   return {

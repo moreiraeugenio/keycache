@@ -8,7 +8,7 @@ interface Note {
 
 interface AppSettings {
   theme: 'system' | 'light' | 'dark';
-  dbPath: string;
+  dataFilePath: string;
   valuesHidden: boolean;
   shortcuts: {
     globalToggle: string;
@@ -27,7 +27,7 @@ interface KeycacheApi {
 
   getSettings(): Promise<AppSettings>;
   saveSettings(s: AppSettings): Promise<{ ok: boolean; error?: string }>;
-  browseDbPath(): Promise<string | null>;
+  browseDataFilePath(): Promise<string | null>;
   onThemeChanged(cb: (theme: string) => void): void;
   onShortcutsChanged(cb: (shortcuts: AppSettings['shortcuts']) => void): void;
   onSettingsOpen(cb: () => void): void;

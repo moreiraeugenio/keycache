@@ -1,6 +1,6 @@
 # Keycache
 
-A system tray desktop app for storing key-value notes in a local JSON file. Lives in the menu bar with a global shortcut, keyboard-first navigation, value masking for secrets, a configurable database location, user-customizable shortcuts, and system/light/dark themes.
+A system tray desktop app for storing key-value notes in a local JSON file. Lives in the menu bar with a global shortcut, keyboard-first navigation, value masking for secrets, a configurable data file location, user-customizable shortcuts, and system/light/dark themes.
 
 ## Tech Stack
 

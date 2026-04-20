@@ -6,7 +6,7 @@ import {
   loadSettings,
   saveSettings,
   getDefaultSettings,
-  moveDbFile,
+  moveDataFile,
 } from '../../src/main/settings';
 
 let tmpDir: string;
@@ -23,7 +23,7 @@ describe('getDefaultSettings', () => {
   it('returns expected defaults', () => {
     const defaults = getDefaultSettings();
     expect(defaults.theme).toBe('system');
-    expect(defaults.dbPath).toBe('');
+    expect(defaults.dataFilePath).toBe('');
     expect(defaults.valuesHidden).toBe(false);
     expect(defaults.shortcuts.globalToggle).toBe('CmdOrCtrl+Shift+K');
     expect(defaults.shortcuts.newNote).toBe('CmdOrCtrl+N');
@@ -49,7 +49,7 @@ describe('loadSettings', () => {
     fs.writeFileSync(filePath, JSON.stringify({ theme: 'dark' }), 'utf-8');
     const settings = loadSettings(filePath);
     expect(settings.theme).toBe('dark');
-    expect(settings.dbPath).toBe('');
+    expect(settings.dataFilePath).toBe('');
     expect(settings.valuesHidden).toBe(false);
     expect(settings.shortcuts).toEqual(getDefaultSettings().shortcuts);
   });
@@ -78,7 +78,7 @@ describe('loadSettings', () => {
     const filePath = path.join(tmpDir, 'settings.json');
     const stored = {
       theme: 'light' as const,
-      dbPath: '/custom/path.json',
+      dataFilePath: '/custom/path.json',
       valuesHidden: true,
       shortcuts: {
         globalToggle: 'CmdOrCtrl+Shift+J',
@@ -114,17 +114,17 @@ describe('saveSettings', () => {
   });
 });
 
-describe('moveDbFile', () => {
+describe('moveDataFile', () => {
   it('returns ok for same path', () => {
     const p = path.join(tmpDir, 'same.json');
     fs.writeFileSync(p, '{}');
-    expect(moveDbFile(p, p)).toEqual({ ok: true });
+    expect(moveDataFile(p, p)).toEqual({ ok: true });
   });
 
   it('returns ok when source does not exist (no-op)', () => {
     const src = path.join(tmpDir, 'missing.json');
     const dst = path.join(tmpDir, 'dst.json');
-    expect(moveDbFile(src, dst)).toEqual({ ok: true });
+    expect(moveDataFile(src, dst)).toEqual({ ok: true });
     expect(fs.existsSync(dst)).toBe(false);
   });
 
@@ -132,7 +132,7 @@ describe('moveDbFile', () => {
     const src = path.join(tmpDir, 'src.json');
     const dst = path.join(tmpDir, 'dst.json');
     fs.writeFileSync(src, '{"data":1}');
-    const result = moveDbFile(src, dst);
+    const result = moveDataFile(src, dst);
     expect(result).toEqual({ ok: true });
     expect(fs.existsSync(src)).toBe(false);
     expect(fs.readFileSync(dst, 'utf-8')).toBe('{"data":1}');
@@ -143,7 +143,7 @@ describe('moveDbFile', () => {
     const dst = path.join(tmpDir, 'dst.json');
     fs.writeFileSync(src, '{}');
     fs.writeFileSync(dst, '{}');
-    const result = moveDbFile(src, dst);
+    const result = moveDataFile(src, dst);
     expect(result.ok).toBe(false);
     expect(result.error).toContain('already exists');
   });
@@ -161,7 +161,7 @@ describe('moveDbFile', () => {
     };
 
     try {
-      const result = moveDbFile(src, dst);
+      const result = moveDataFile(src, dst);
       expect(result).toEqual({ ok: true });
       expect(fs.existsSync(src)).toBe(false);
       expect(fs.readFileSync(dst, 'utf-8')).toBe('{"cross":true}');
@@ -183,7 +183,7 @@ describe('moveDbFile', () => {
     };
 
     try {
-      expect(() => moveDbFile(src, dst)).toThrow(/EACCES/);
+      expect(() => moveDataFile(src, dst)).toThrow(/EACCES/);
       expect(fs.existsSync(src)).toBe(true);
       expect(fs.existsSync(dst)).toBe(false);
     } finally {

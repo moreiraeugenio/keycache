@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { NotesDb } from '../../src/main/db';
+import type { NotesStore } from '../../src/main/store';
 
 vi.mock('electron', () => ({
   ipcMain: { handle: vi.fn() },
 }));
 
 import { ipcMain } from 'electron';
-import { registerIpcHandlers, type DbHolder } from '../../src/main/ipc';
+import { registerIpcHandlers, type NotesStoreHolder } from '../../src/main/ipc';
 
 function getHandler(channel: string): (...args: unknown[]) => unknown {
   const call = (ipcMain.handle as ReturnType<typeof vi.fn>).mock.calls.find(
@@ -16,7 +16,7 @@ function getHandler(channel: string): (...args: unknown[]) => unknown {
 }
 
 describe('registerIpcHandlers', () => {
-  const mockDb: NotesDb = {
+  const mockStore: NotesStore = {
     getNotes: vi.fn().mockReturnValue([{ id: 1, note_key: 'k' }]),
     addNote: vi.fn().mockReturnValue(42),
     updateNote: vi.fn(),
@@ -24,11 +24,11 @@ describe('registerIpcHandlers', () => {
     close: vi.fn(),
   };
 
-  const db: DbHolder = { current: mockDb };
+  const store: NotesStoreHolder = { current: mockStore };
 
   beforeEach(() => {
     vi.clearAllMocks();
-    registerIpcHandlers(db);
+    registerIpcHandlers(store);
   });
 
   it('registers all four IPC channels', () => {
@@ -39,43 +39,43 @@ describe('registerIpcHandlers', () => {
     expect(ipcMain.handle).toHaveBeenCalledWith('notes:delete', expect.any(Function));
   });
 
-  it('notes:getAll returns db.current.getNotes()', () => {
+  it('notes:getAll returns store.current.getNotes()', () => {
     const result = getHandler('notes:getAll')();
-    expect(mockDb.getNotes).toHaveBeenCalled();
+    expect(mockStore.getNotes).toHaveBeenCalled();
     expect(result).toEqual([{ id: 1, note_key: 'k' }]);
   });
 
-  it('notes:add passes key, value to db.current.addNote', () => {
+  it('notes:add passes key, value to store.current.addNote', () => {
     const event = {};
     const result = getHandler('notes:add')(event, 'API_KEY', 'secret');
-    expect(mockDb.addNote).toHaveBeenCalledWith('API_KEY', 'secret');
+    expect(mockStore.addNote).toHaveBeenCalledWith('API_KEY', 'secret');
     expect(result).toBe(42);
   });
 
-  it('notes:update passes id, key, value to db.current.updateNote', () => {
+  it('notes:update passes id, key, value to store.current.updateNote', () => {
     const event = {};
     getHandler('notes:update')(event, 7, 'new_key', 'new_val');
-    expect(mockDb.updateNote).toHaveBeenCalledWith(7, 'new_key', 'new_val');
+    expect(mockStore.updateNote).toHaveBeenCalledWith(7, 'new_key', 'new_val');
   });
 
-  it('notes:delete passes id to db.current.deleteNote', () => {
+  it('notes:delete passes id to store.current.deleteNote', () => {
     const event = {};
     getHandler('notes:delete')(event, 3);
-    expect(mockDb.deleteNote).toHaveBeenCalledWith(3);
+    expect(mockStore.deleteNote).toHaveBeenCalledWith(3);
   });
 
-  it('uses current db reference (supports swapping)', () => {
-    const newDb: NotesDb = {
+  it('uses current store reference (supports swapping)', () => {
+    const newStore: NotesStore = {
       getNotes: vi.fn().mockReturnValue([]),
       addNote: vi.fn(),
       updateNote: vi.fn(),
       deleteNote: vi.fn(),
       close: vi.fn(),
     };
-    db.current = newDb;
+    store.current = newStore;
     getHandler('notes:getAll')();
-    expect(newDb.getNotes).toHaveBeenCalled();
-    expect(mockDb.getNotes).not.toHaveBeenCalled();
-    db.current = mockDb;
+    expect(newStore.getNotes).toHaveBeenCalled();
+    expect(mockStore.getNotes).not.toHaveBeenCalled();
+    store.current = mockStore;
   });
 });

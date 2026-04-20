@@ -1,20 +1,20 @@
 import { app, dialog, ipcMain, type BrowserWindow } from 'electron';
 import path from 'path';
-import { createDatabase } from './db';
-import { registerIpcHandlers, type DbHolder } from './ipc';
+import { createNotesStore } from './store';
+import { registerIpcHandlers, type NotesStoreHolder } from './ipc';
 import { createTray } from './tray';
 import { createTrayWindow, toggleWindow, hideWindow, showWindow } from './window';
 import { registerShortcuts, unregisterShortcuts } from './shortcuts';
 import {
   loadSettings,
   saveSettings,
-  moveDbFile,
+  moveDataFile,
   type AppSettings,
 } from './settings';
 
-function getDbPath(): string {
-  if (process.env.KEYCACHE_DB_PATH) {
-    return process.env.KEYCACHE_DB_PATH;
+function getDataFilePath(): string {
+  if (process.env.KEYCACHE_DATA_FILE_PATH) {
+    return process.env.KEYCACHE_DATA_FILE_PATH;
   }
   if (app.isPackaged) {
     return path.join(app.getPath('userData'), 'keycache.json');
@@ -26,36 +26,38 @@ function getSettingsPath(): string {
   return path.join(app.getPath('userData'), 'settings.json');
 }
 
-function effectiveDbPath(settings: AppSettings): string {
-  if (process.env.KEYCACHE_DB_PATH) return process.env.KEYCACHE_DB_PATH;
-  return settings.dbPath || getDbPath();
+function effectiveDataFilePath(settings: AppSettings): string {
+  if (process.env.KEYCACHE_DATA_FILE_PATH) return process.env.KEYCACHE_DATA_FILE_PATH;
+  return settings.dataFilePath || getDataFilePath();
 }
 
 const settingsPath = getSettingsPath();
 let settings = loadSettings(settingsPath);
 
-const db: DbHolder = { current: createDatabase(effectiveDbPath(settings)) };
-registerIpcHandlers(db);
+const store: NotesStoreHolder = {
+  current: createNotesStore(effectiveDataFilePath(settings)),
+};
+registerIpcHandlers(store);
 
 let isQuitting = false;
 
 function registerSettingsIpc(win: BrowserWindow): void {
   ipcMain.handle('settings:get', () => ({
     ...settings,
-    dbPath: effectiveDbPath(settings),
+    dataFilePath: effectiveDataFilePath(settings),
   }));
 
   ipcMain.handle(
     'settings:save',
     async (_e, incoming: AppSettings): Promise<{ ok: boolean; error?: string }> => {
-      const oldDbPath = effectiveDbPath(settings);
-      const newDbPath = incoming.dbPath || getDbPath();
+      const oldDataFilePath = effectiveDataFilePath(settings);
+      const newDataFilePath = incoming.dataFilePath || getDataFilePath();
 
-      if (newDbPath !== oldDbPath) {
-        const result = moveDbFile(oldDbPath, newDbPath);
+      if (newDataFilePath !== oldDataFilePath) {
+        const result = moveDataFile(oldDataFilePath, newDataFilePath);
         if (!result.ok) return result;
-        db.current.close();
-        db.current = createDatabase(newDbPath);
+        store.current.close();
+        store.current = createNotesStore(newDataFilePath);
       }
 
       if (incoming.shortcuts.globalToggle !== settings.shortcuts.globalToggle) {
@@ -70,7 +72,11 @@ function registerSettingsIpc(win: BrowserWindow): void {
         incoming.shortcuts.newNote !== settings.shortcuts.newNote ||
         incoming.shortcuts.focusSearch !== settings.shortcuts.focusSearch;
 
-      settings = { ...incoming, dbPath: incoming.dbPath === getDbPath() ? '' : incoming.dbPath };
+      settings = {
+        ...incoming,
+        dataFilePath:
+          incoming.dataFilePath === getDataFilePath() ? '' : incoming.dataFilePath,
+      };
       saveSettings(settingsPath, settings);
 
       if (themeChanged) {
@@ -84,10 +90,10 @@ function registerSettingsIpc(win: BrowserWindow): void {
     },
   );
 
-  ipcMain.handle('settings:browse-db-path', async () => {
+  ipcMain.handle('settings:browse-data-file-path', async () => {
     const result = await dialog.showSaveDialog(win, {
-      title: 'Choose database file location',
-      defaultPath: effectiveDbPath(settings),
+      title: 'Choose data file location',
+      defaultPath: effectiveDataFilePath(settings),
       filters: [{ name: 'JSON', extensions: ['json'] }],
     });
     return result.canceled ? null : result.filePath;
@@ -154,5 +160,5 @@ app.on('before-quit', () => {
 
 app.on('will-quit', () => {
   unregisterShortcuts();
-  db.current.close();
+  store.current.close();
 });
