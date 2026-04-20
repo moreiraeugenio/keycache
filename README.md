@@ -104,7 +104,7 @@ Releases are built and published via GitHub Actions (`.github/workflows/release.
    git push --tags
    ```
 
-Pushing the `v*` tag triggers the workflow. Each of the three OS runners builds its native artifacts in parallel on `macos-latest` / `windows-latest` / `ubuntu-latest`; a final job collects them and creates a **draft** GitHub Release with auto-generated notes. Review the draft on the Releases page and publish manually.
+Pushing the `v*` tag triggers the workflow. Each of the three OS runners builds its native artifacts in parallel on `macos-latest` / `windows-latest` / `ubuntu-latest`; a final job collects them and **publishes** a GitHub Release with auto-generated notes, visible to the public immediately.
 
 ### Manual build (no release)
 
