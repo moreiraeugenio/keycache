@@ -4,6 +4,7 @@ A system tray desktop app for storing key-value notes in a local JSON file. Live
 
 ## Tech Stack
 
+- **Node.js 24.15.0** — pinned via `.nvmrc` (read by nvm/fnm/asdf/volta) and enforced softly by `engines.node` in `package.json`
 - **Electron 40** — desktop shell with secure IPC (`contextIsolation: true`, `nodeIntegration: false`)
 - **TypeScript** — across main, preload, and renderer
 - **electron-vite** — dev server with HMR and production build
@@ -16,6 +17,7 @@ A system tray desktop app for storing key-value notes in a local JSON file. Live
 ## Getting Started
 
 ```bash
+nvm use        # or `fnm use` — activates the Node version pinned in .nvmrc
 npm install
 npm run dev
 ```
@@ -38,6 +40,44 @@ The window starts hidden — look for the Keycache icon in the menu bar / system
 | `npm run format` | Format with Prettier |
 | `npm run package` | Build + package unpacked app to `dist/` |
 | `npm run dist` | Build + create distributable installer to `dist/` |
+
+## Releases
+
+Releases are built and published via GitHub Actions (`.github/workflows/release.yml`). The workflow produces **unsigned** artifacts for macOS (`.dmg` + `.zip`), Windows (`.exe`), and Linux (`.AppImage`).
+
+### Cutting the first release
+
+`package.json` starts at `0.0.0` (nothing has shipped yet). The first release will be **`v0.0.1`**:
+
+```bash
+node --version                                # must match .nvmrc (24.15.0)
+npm ci && npm run lint && npm run test && npm run build
+npm version patch -m "chore: release v%s"    # 0.0.0 → 0.0.1, commits, tags v0.0.1
+git push origin main
+git push --tags
+```
+
+Pushing the `v0.0.1` tag triggers the workflow. Each of the three OS runners builds its native artifacts in parallel on `macos-latest` / `windows-latest` / `ubuntu-latest`; a final job collects them and creates a **draft** GitHub Release with auto-generated notes. Review the draft on the Releases page and publish manually.
+
+### Subsequent releases
+
+Same flow, different bump level:
+
+- **Patch** (bugfix): `npm version patch` → `0.0.2`
+- **Minor** (first feature milestone or later): `npm version minor` → `0.1.0`
+- **Major** (breaking change or first stable release): `npm version major` → `1.0.0`
+
+### Manual build (no release)
+
+Use the Actions tab's **Run workflow** button to trigger the matrix without publishing — artifacts are uploaded to the workflow run for inspection only.
+
+### Unsigned caveat
+
+- **macOS** users see a Gatekeeper warning on first launch; right-click the app → **Open** to bypass.
+- **Windows** users see a SmartScreen warning; click **More info** → **Run anyway**.
+- macOS default target is the runner's arch only (arm64 on `macos-latest`). For x64 or universal builds, extend `mac.target` / `arch` in `electron-builder.yml`.
+
+Code signing (Apple Developer cert, Windows EV cert) is not set up; enabling it requires the certs plus additional GitHub secrets.
 
 ## Contributing
 
