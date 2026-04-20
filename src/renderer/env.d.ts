@@ -26,8 +26,11 @@ interface KeycacheApi {
   hideWindow(): void;
 
   getSettings(): Promise<AppSettings>;
-  saveSettings(s: AppSettings): Promise<{ ok: boolean; error?: string }>;
+  saveSettings(
+    s: AppSettings & { dataFileMode?: 'new' | 'adopt' },
+  ): Promise<{ ok: boolean; error?: string }>;
   browseDataFilePath(): Promise<string | null>;
+  browseExistingDataFilePath(): Promise<string | null>;
   onThemeChanged(cb: (theme: string) => void): void;
   onShortcutsChanged(cb: (shortcuts: AppSettings['shortcuts']) => void): void;
   onSettingsOpen(cb: () => void): void;

@@ -5,11 +5,17 @@ const settingsCloseBtn = document.getElementById('settings-close') as HTMLButton
 const settingsCancelBtn = document.getElementById('settings-cancel') as HTMLButtonElement;
 const settingsSaveBtn = document.getElementById('settings-save') as HTMLButtonElement;
 const settingsBrowseBtn = document.getElementById('settings-browse') as HTMLButtonElement;
+const settingsOpenExistingBtn = document.getElementById(
+  'settings-open-existing',
+) as HTMLButtonElement;
 const themeSelect = document.getElementById('settings-theme') as HTMLSelectElement;
 const dataFilePathInput = document.getElementById(
   'settings-data-file-path',
 ) as HTMLInputElement;
 const settingsError = document.getElementById('settings-error') as HTMLDivElement;
+const dataFileWarning = document.getElementById(
+  'settings-data-file-warning',
+) as HTMLDivElement;
 
 const shortcutInputs = {
   globalToggle: document.getElementById('shortcut-global-toggle') as HTMLInputElement,
@@ -18,6 +24,10 @@ const shortcutInputs = {
 };
 
 let currentThemeMode: AppSettings['theme'] = 'system';
+let dataFileMode: 'new' | 'adopt' = 'new';
+let initialNoteCount = 0;
+let initialDataFilePath = '';
+let currentValuesHidden = false;
 
 const defaults: AppSettings['shortcuts'] = {
   globalToggle: 'CmdOrCtrl+Shift+K',
@@ -64,6 +74,7 @@ function clearError(): void {
 function populateForm(settings: AppSettings): void {
   themeSelect.value = settings.theme;
   dataFilePathInput.value = settings.dataFilePath;
+  currentValuesHidden = settings.valuesHidden;
   for (const [key, input] of Object.entries(shortcutInputs)) {
     const accel = settings.shortcuts[key as keyof AppSettings['shortcuts']];
     input.value = formatAccelerator(accel);
@@ -71,22 +82,42 @@ function populateForm(settings: AppSettings): void {
   }
 }
 
-function readForm(): AppSettings {
+function readForm(): AppSettings & { dataFileMode: 'new' | 'adopt' } {
   return {
     theme: themeSelect.value as AppSettings['theme'],
     dataFilePath: dataFilePathInput.value,
+    valuesHidden: currentValuesHidden,
     shortcuts: {
       globalToggle: shortcutInputs.globalToggle.dataset.accel || defaults.globalToggle,
       newNote: shortcutInputs.newNote.dataset.accel || defaults.newNote,
       focusSearch: shortcutInputs.focusSearch.dataset.accel || defaults.focusSearch,
     },
+    dataFileMode,
   };
+}
+
+function clearDataFileWarning(): void {
+  dataFileWarning.textContent = '';
+  dataFileWarning.hidden = true;
+}
+
+function showDataFileWarning(msg: string): void {
+  dataFileWarning.textContent = msg;
+  dataFileWarning.hidden = false;
 }
 
 export async function openSettingsDialog(): Promise<void> {
   clearError();
-  const settings = await window.api.getSettings();
+  clearDataFileWarning();
+  dataFileMode = 'new';
+  const [settings, notes] = await Promise.all([
+    window.api.getSettings(),
+    window.api.getNotes(),
+  ]);
   populateForm(settings);
+  initialNoteCount = notes.length;
+  initialDataFilePath = settings.dataFilePath;
+  settingsBrowseBtn.hidden = notes.length === 0;
   window.api.setDialogOpen(true);
   settingsDialog.showModal();
   (document.activeElement as HTMLElement | null)?.blur();
@@ -106,7 +137,26 @@ settingsDialog.addEventListener('click', (e) => {
 
 settingsBrowseBtn.addEventListener('click', async () => {
   const path = await window.api.browseDataFilePath();
-  if (path) dataFilePathInput.value = path;
+  if (path) {
+    dataFilePathInput.value = path;
+    dataFileMode = 'new';
+    clearDataFileWarning();
+  }
+});
+
+settingsOpenExistingBtn.addEventListener('click', async () => {
+  const path = await window.api.browseExistingDataFilePath();
+  if (!path) return;
+  dataFilePathInput.value = path;
+  dataFileMode = 'adopt';
+  if (initialNoteCount > 0 && path !== initialDataFilePath) {
+    const noun = initialNoteCount === 1 ? 'note' : 'notes';
+    showDataFileWarning(
+      `Switching will leave your ${initialNoteCount} ${noun} in the old file at ${initialDataFilePath}.`,
+    );
+  } else {
+    clearDataFileWarning();
+  }
 });
 
 settingsSaveBtn.addEventListener('click', async () => {

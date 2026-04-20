@@ -78,6 +78,7 @@ vi.mock('electron', () => ({
   },
   dialog: {
     showSaveDialog: vi.fn().mockResolvedValue({ canceled: true, filePath: '' }),
+    showOpenDialog: vi.fn().mockResolvedValue({ canceled: true, filePaths: [] }),
     showMessageBox: vi.fn().mockResolvedValue({ response: 0 }),
   },
 }));
@@ -325,6 +326,7 @@ describe('main process (index.ts)', () => {
       expect(ipcHandlers['settings:get']).toBeDefined();
       expect(ipcHandlers['settings:save']).toBeDefined();
       expect(ipcHandlers['settings:browse-data-file-path']).toBeDefined();
+      expect(ipcHandlers['settings:browse-existing-data-file']).toBeDefined();
     });
 
     it('settings:get returns effective settings with dataFilePath filled in', async () => {
@@ -334,6 +336,14 @@ describe('main process (index.ts)', () => {
       expect(result).toHaveProperty('theme', 'system');
       expect(result).toHaveProperty('dataFilePath');
       expect((result as { dataFilePath: string }).dataFilePath).not.toBe('');
+    });
+
+    it('settings:get prefers KEYCACHE_DATA_FILE_PATH env over settings', async () => {
+      process.env.KEYCACHE_DATA_FILE_PATH = '/tmp/env-override.json';
+      await importMain();
+      whenReadyCb!();
+      const result = ipcHandlers['settings:get']() as { dataFilePath: string };
+      expect(result.dataFilePath).toBe('/tmp/env-override.json');
     });
 
     it('intercepts window close to hide instead of destroy', async () => {
@@ -357,6 +367,236 @@ describe('main process (index.ts)', () => {
       winEventHandlers['close'](event);
       expect(mockPreventDefault).not.toHaveBeenCalled();
       expect(mocks.hideWindow).not.toHaveBeenCalled();
+    });
+  });
+
+  // -- settings:save --
+
+  describe('settings:save', () => {
+    const baseShortcuts = {
+      globalToggle: 'CmdOrCtrl+Shift+K',
+      newNote: 'CmdOrCtrl+N',
+      focusSearch: 'CmdOrCtrl+F',
+    };
+
+    function basePayload(overrides: Record<string, unknown> = {}) {
+      return {
+        theme: 'system' as const,
+        dataFilePath: '',
+        valuesHidden: false,
+        shortcuts: { ...baseShortcuts },
+        ...overrides,
+      };
+    }
+
+    it('returns ok when nothing changes', async () => {
+      await importMain();
+      whenReadyCb!();
+      const result = await ipcHandlers['settings:save']({}, basePayload());
+      expect(result).toEqual({ ok: true });
+      expect(mocks.moveDataFile).not.toHaveBeenCalled();
+      expect(mocks.saveSettings).toHaveBeenCalled();
+    });
+
+    it('moves data file and re-creates store when path changes (default mode)', async () => {
+      await importMain();
+      whenReadyCb!();
+      const initialStore = mocks.createNotesStore.mock.results[0].value;
+      mocks.moveDataFile.mockReturnValueOnce({ ok: true });
+
+      const result = await ipcHandlers['settings:save'](
+        {},
+        basePayload({ dataFilePath: '/tmp/new.json' }),
+      );
+
+      expect(result).toEqual({ ok: true });
+      expect(mocks.moveDataFile).toHaveBeenCalledWith(expect.any(String), '/tmp/new.json');
+      expect(initialStore.close).toHaveBeenCalled();
+      expect(mocks.createNotesStore).toHaveBeenLastCalledWith('/tmp/new.json');
+    });
+
+    it('returns moveDataFile error and skips store swap', async () => {
+      await importMain();
+      whenReadyCb!();
+      const initialStore = mocks.createNotesStore.mock.results[0].value;
+      const initialStoreCalls = mocks.createNotesStore.mock.calls.length;
+      mocks.moveDataFile.mockReturnValueOnce({ ok: false, error: 'boom' });
+
+      const result = await ipcHandlers['settings:save'](
+        {},
+        basePayload({ dataFilePath: '/tmp/new.json' }),
+      );
+
+      expect(result).toEqual({ ok: false, error: 'boom' });
+      expect(initialStore.close).not.toHaveBeenCalled();
+      expect(mocks.createNotesStore.mock.calls.length).toBe(initialStoreCalls);
+    });
+
+    it('adopts existing file without moving when dataFileMode = adopt', async () => {
+      await importMain();
+      whenReadyCb!();
+      const initialStore = mocks.createNotesStore.mock.results[0].value;
+
+      const result = await ipcHandlers['settings:save'](
+        {},
+        basePayload({ dataFilePath: '/tmp/existing.json', dataFileMode: 'adopt' }),
+      );
+
+      expect(result).toEqual({ ok: true });
+      expect(mocks.moveDataFile).not.toHaveBeenCalled();
+      expect(initialStore.close).toHaveBeenCalled();
+      expect(mocks.createNotesStore).toHaveBeenLastCalledWith('/tmp/existing.json');
+    });
+
+    it('does not persist dataFileMode in saved settings', async () => {
+      await importMain();
+      whenReadyCb!();
+      mocks.moveDataFile.mockReturnValueOnce({ ok: true });
+
+      await ipcHandlers['settings:save'](
+        {},
+        basePayload({ dataFilePath: '/tmp/new.json', dataFileMode: 'new' }),
+      );
+
+      const persisted = mocks.saveSettings.mock.calls.at(-1)![1] as Record<string, unknown>;
+      expect(persisted).not.toHaveProperty('dataFileMode');
+    });
+
+    it('persists dataFilePath as empty when it equals the default path', async () => {
+      await importMain();
+      whenReadyCb!();
+      const defaultPath = mocks.createNotesStore.mock.calls[0][0] as string;
+
+      await ipcHandlers['settings:save']({}, basePayload({ dataFilePath: defaultPath }));
+
+      const persisted = mocks.saveSettings.mock.calls.at(-1)![1] as { dataFilePath: string };
+      expect(persisted.dataFilePath).toBe('');
+    });
+
+    it('re-registers global shortcut when globalToggle changes', async () => {
+      await importMain();
+      whenReadyCb!();
+      mocks.unregisterShortcuts.mockClear();
+      mocks.registerShortcuts.mockClear();
+
+      await ipcHandlers['settings:save'](
+        {},
+        basePayload({ shortcuts: { ...baseShortcuts, globalToggle: 'CmdOrCtrl+Shift+J' } }),
+      );
+
+      expect(mocks.unregisterShortcuts).toHaveBeenCalled();
+      expect(mocks.registerShortcuts).toHaveBeenCalledWith(
+        'CmdOrCtrl+Shift+J',
+        expect.any(Function),
+      );
+      const newToggle = mocks.registerShortcuts.mock.calls.at(-1)![1] as () => void;
+      newToggle();
+      expect(mocks.toggleWindow).toHaveBeenCalled();
+    });
+
+    it('emits settings:theme-changed when theme changes', async () => {
+      await importMain();
+      whenReadyCb!();
+      mockWebContents.send.mockClear();
+
+      await ipcHandlers['settings:save']({}, basePayload({ theme: 'dark' }));
+
+      expect(mockWebContents.send).toHaveBeenCalledWith('settings:theme-changed', 'dark');
+    });
+
+    it('respects KEYCACHE_DATA_FILE_PATH env in getDataFilePath when persisting', async () => {
+      process.env.KEYCACHE_DATA_FILE_PATH = '/tmp/env.json';
+      await importMain();
+      whenReadyCb!();
+
+      await ipcHandlers['settings:save']({}, basePayload({ dataFilePath: '/tmp/env.json' }));
+
+      const persisted = mocks.saveSettings.mock.calls.at(-1)![1] as { dataFilePath: string };
+      expect(persisted.dataFilePath).toBe('');
+    });
+
+    it('emits settings:shortcuts-changed when newNote or focusSearch change', async () => {
+      await importMain();
+      whenReadyCb!();
+      mockWebContents.send.mockClear();
+
+      await ipcHandlers['settings:save'](
+        {},
+        basePayload({ shortcuts: { ...baseShortcuts, newNote: 'CmdOrCtrl+M' } }),
+      );
+
+      expect(mockWebContents.send).toHaveBeenCalledWith(
+        'settings:shortcuts-changed',
+        expect.objectContaining({ newNote: 'CmdOrCtrl+M' }),
+      );
+    });
+  });
+
+  // -- settings:browse-data-file-path --
+
+  describe('settings:browse-data-file-path', () => {
+    it('returns selected file path', async () => {
+      const { dialog: elDialog } = await import('electron');
+      (elDialog.showSaveDialog as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        canceled: false,
+        filePath: '/tmp/picked.json',
+      });
+      await importMain();
+      whenReadyCb!();
+      const result = await ipcHandlers['settings:browse-data-file-path']();
+      expect(result).toBe('/tmp/picked.json');
+    });
+
+    it('returns null when canceled', async () => {
+      const { dialog: elDialog } = await import('electron');
+      (elDialog.showSaveDialog as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        canceled: true,
+        filePath: '',
+      });
+      await importMain();
+      whenReadyCb!();
+      const result = await ipcHandlers['settings:browse-data-file-path']();
+      expect(result).toBeNull();
+    });
+  });
+
+  // -- settings:browse-existing-data-file --
+
+  describe('settings:browse-existing-data-file', () => {
+    it('returns the first selected file path', async () => {
+      const { dialog: elDialog } = await import('electron');
+      (elDialog.showOpenDialog as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        canceled: false,
+        filePaths: ['/tmp/existing.json'],
+      });
+      await importMain();
+      whenReadyCb!();
+      const result = await ipcHandlers['settings:browse-existing-data-file']();
+      expect(result).toBe('/tmp/existing.json');
+    });
+
+    it('returns null when canceled', async () => {
+      const { dialog: elDialog } = await import('electron');
+      (elDialog.showOpenDialog as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        canceled: true,
+        filePaths: [],
+      });
+      await importMain();
+      whenReadyCb!();
+      const result = await ipcHandlers['settings:browse-existing-data-file']();
+      expect(result).toBeNull();
+    });
+
+    it('returns null when no file is selected', async () => {
+      const { dialog: elDialog } = await import('electron');
+      (elDialog.showOpenDialog as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        canceled: false,
+        filePaths: [],
+      });
+      await importMain();
+      whenReadyCb!();
+      const result = await ipcHandlers['settings:browse-existing-data-file']();
+      expect(result).toBeNull();
     });
   });
 

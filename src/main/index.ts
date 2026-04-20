@@ -49,33 +49,42 @@ function registerSettingsIpc(win: BrowserWindow): void {
 
   ipcMain.handle(
     'settings:save',
-    async (_e, incoming: AppSettings): Promise<{ ok: boolean; error?: string }> => {
+    async (
+      _e,
+      incoming: AppSettings & { dataFileMode?: 'new' | 'adopt' },
+    ): Promise<{ ok: boolean; error?: string }> => {
       const oldDataFilePath = effectiveDataFilePath(settings);
       const newDataFilePath = incoming.dataFilePath || getDataFilePath();
+      const { dataFileMode, ...persisted } = incoming;
 
       if (newDataFilePath !== oldDataFilePath) {
-        const result = moveDataFile(oldDataFilePath, newDataFilePath);
-        if (!result.ok) return result;
-        store.current.close();
-        store.current = createNotesStore(newDataFilePath);
+        if (dataFileMode === 'adopt') {
+          store.current.close();
+          store.current = createNotesStore(newDataFilePath);
+        } else {
+          const result = moveDataFile(oldDataFilePath, newDataFilePath);
+          if (!result.ok) return result;
+          store.current.close();
+          store.current = createNotesStore(newDataFilePath);
+        }
       }
 
-      if (incoming.shortcuts.globalToggle !== settings.shortcuts.globalToggle) {
+      if (persisted.shortcuts.globalToggle !== settings.shortcuts.globalToggle) {
         unregisterShortcuts();
-        registerShortcuts(incoming.shortcuts.globalToggle, () =>
+        registerShortcuts(persisted.shortcuts.globalToggle, () =>
           toggleWindow(win, win.getBounds()),
         );
       }
 
-      const themeChanged = incoming.theme !== settings.theme;
+      const themeChanged = persisted.theme !== settings.theme;
       const shortcutsChanged =
-        incoming.shortcuts.newNote !== settings.shortcuts.newNote ||
-        incoming.shortcuts.focusSearch !== settings.shortcuts.focusSearch;
+        persisted.shortcuts.newNote !== settings.shortcuts.newNote ||
+        persisted.shortcuts.focusSearch !== settings.shortcuts.focusSearch;
 
       settings = {
-        ...incoming,
+        ...persisted,
         dataFilePath:
-          incoming.dataFilePath === getDataFilePath() ? '' : incoming.dataFilePath,
+          persisted.dataFilePath === getDataFilePath() ? '' : persisted.dataFilePath,
       };
       saveSettings(settingsPath, settings);
 
@@ -97,6 +106,16 @@ function registerSettingsIpc(win: BrowserWindow): void {
       filters: [{ name: 'JSON', extensions: ['json'] }],
     });
     return result.canceled ? null : result.filePath;
+  });
+
+  ipcMain.handle('settings:browse-existing-data-file', async () => {
+    const result = await dialog.showOpenDialog(win, {
+      title: 'Open existing data file',
+      defaultPath: effectiveDataFilePath(settings),
+      filters: [{ name: 'JSON', extensions: ['json'] }],
+      properties: ['openFile'],
+    });
+    return result.canceled || result.filePaths.length === 0 ? null : result.filePaths[0];
   });
 }
 

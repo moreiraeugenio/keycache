@@ -691,6 +691,21 @@ body {
   font-size: 12px !important;
 }
 
+.field-warning {
+  margin-top: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--warning);
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid var(--warning);
+  border-radius: var(--radius-sm);
+}
+
+.field-warning[hidden] {
+  display: none;
+}
+
 .settings-shortcuts {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
