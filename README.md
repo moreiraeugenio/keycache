@@ -1,6 +1,31 @@
 # Keycache
 
-A system tray desktop app for storing key-value notes in a local JSON file. Lives in the menu bar with a global shortcut, keyboard-first navigation, value masking for secrets, a configurable data file location, user-customizable shortcuts, and system/light/dark themes.
+<p align="center">
+  <img src="assets/demo.gif" alt="Keycache demo — open the popup, search a key, press Enter to copy the value to the clipboard" width="420" />
+</p>
+
+<p align="center">
+  <strong>Key-value notes in your menu bar.</strong><br/>
+  <em>One shortcut to open. Keyboard-first. Masked values for secrets.</em>
+</p>
+
+<p align="center">
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0--or--later-blue.svg" alt="License: GPL v3 or later" /></a>
+  <a href="./.nvmrc"><img src="https://img.shields.io/badge/node-24.15.0-brightgreen" alt="Node 24.15.0" /></a>
+  <img src="https://img.shields.io/badge/platforms-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey" alt="macOS, Windows, Linux" />
+  <a href="https://github.com/moreiraeugenio/keycache/actions/workflows/release.yml"><img src="https://github.com/moreiraeugenio/keycache/actions/workflows/release.yml/badge.svg" alt="Release workflow status" /></a>
+</p>
+
+## ✨ Features
+
+- 🔑 **Key-value notes** stored locally in a plain JSON file — no cloud, no accounts
+- ⚡ **Global shortcut** (`⌘⇧K` / `Ctrl+Shift+K`) — open from anywhere
+- ⌨️ **Keyboard-first navigation** — arrow-keys to move, Enter to copy, Escape to hide
+- 🙈 **Value masking** for secrets — toggle on/off per session
+- 🌓 **Themes** — system / light / dark
+- 📍 **Configurable data file** location — keep your notes anywhere
+- 🎹 **Customizable shortcuts** — global toggle, new note, focus search
+- 🔒 **Secure-by-default Electron** — `contextIsolation: true`, `nodeIntegration: false`
 
 ## Tech Stack
 
@@ -143,3 +168,9 @@ The 7 rules of a great commit message:
 5. Use the imperative mood in the subject line
 6. Wrap the body at 72 characters
 7. Use the body to explain what and why vs. how
+
+## License
+
+Copyright (c) 2026 Eugênio Moreira
+
+Licensed under the **GNU General Public License v3.0 or later**. See [LICENSE](./LICENSE) for the full text.
