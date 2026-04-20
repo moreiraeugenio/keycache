@@ -158,7 +158,7 @@ describe('main process (index.ts)', () => {
 
   // -- Path resolution --
 
-  describe('getDbPath', () => {
+  describe('getDataFilePath', () => {
     it('uses KEYCACHE_DATA_FILE_PATH env var when set', async () => {
       process.env.KEYCACHE_DATA_FILE_PATH = '/tmp/override.json';
       await importMain();
