@@ -23,6 +23,9 @@ function getDataFilePath(): string {
 }
 
 function getSettingsPath(): string {
+  if (process.env.KEYCACHE_SETTINGS_FILE_PATH) {
+    return process.env.KEYCACHE_SETTINGS_FILE_PATH;
+  }
   if (app.isPackaged) {
     return path.join(app.getPath('userData'), 'settings.json');
   }

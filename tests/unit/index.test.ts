@@ -153,6 +153,7 @@ describe('main process (index.ts)', () => {
     Object.keys(winEventHandlers).forEach((k) => delete winEventHandlers[k]);
     Object.keys(ipcHandlers).forEach((k) => delete ipcHandlers[k]);
     delete process.env.KEYCACHE_DATA_FILE_PATH;
+    delete process.env.KEYCACHE_SETTINGS_FILE_PATH;
   });
 
   afterEach(() => {
@@ -215,6 +216,12 @@ describe('main process (index.ts)', () => {
       expect(mocks.loadSettings).toHaveBeenCalledWith(
         expect.stringMatching(/\/mock\/userData\/settings\.json$/),
       );
+    });
+
+    it('uses KEYCACHE_SETTINGS_FILE_PATH env var when set', async () => {
+      process.env.KEYCACHE_SETTINGS_FILE_PATH = '/tmp/custom-settings.json';
+      await importMain();
+      expect(mocks.loadSettings).toHaveBeenCalledWith('/tmp/custom-settings.json');
     });
   });
 
