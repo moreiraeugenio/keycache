@@ -1,5 +1,6 @@
 import { Tray, Menu, app, nativeImage } from 'electron';
 import path from 'path';
+import { debugLog } from './debug';
 
 export function getTrayIconPath(): string {
   const resourceBase = app.isPackaged
@@ -31,13 +32,32 @@ export function createTray(
   tray.setToolTip('Keycache');
 
   const contextMenu = Menu.buildFromTemplate([
-    { label: 'Settings', click: onSettings },
+    {
+      label: 'Settings',
+      click: () => {
+        debugLog('tray', 'menu', { item: 'Settings' });
+        onSettings();
+      },
+    },
     { type: 'separator' },
-    { label: 'About Keycache', click: onAbout },
-    { label: 'Quit Keycache', click: onQuit },
+    {
+      label: 'About Keycache',
+      click: () => {
+        debugLog('tray', 'menu', { item: 'About' });
+        onAbout();
+      },
+    },
+    {
+      label: 'Quit Keycache',
+      click: () => {
+        debugLog('tray', 'menu', { item: 'Quit' });
+        onQuit();
+      },
+    },
   ]);
 
   tray.on('click', (_event, bounds) => {
+    debugLog('tray', 'click');
     onToggle(bounds);
   });
 

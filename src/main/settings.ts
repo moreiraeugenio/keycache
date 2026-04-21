@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { debugLog } from './debug';
 
 export interface AppSettings {
   theme: 'system' | 'light' | 'dark';
@@ -34,7 +35,7 @@ export function loadSettings(filePath: string): AppSettings {
   try {
     const raw = fs.readFileSync(filePath, 'utf-8');
     const stored = JSON.parse(raw) as Partial<AppSettings>;
-    return {
+    const merged = {
       ...defaults,
       ...stored,
       shortcuts: {
@@ -42,7 +43,10 @@ export function loadSettings(filePath: string): AppSettings {
         ...(stored.shortcuts ?? {}),
       },
     };
+    debugLog('file', 'read', { file: 'settings.json', theme: merged.theme });
+    return merged;
   } catch {
+    debugLog('file', 'read', { file: 'settings.json', fallback: true });
     return defaults;
   }
 }
@@ -53,6 +57,7 @@ export function saveSettings(filePath: string, settings: AppSettings): void {
   const tmp = filePath + '.tmp';
   fs.writeFileSync(tmp, JSON.stringify(settings, null, 2), 'utf-8');
   fs.renameSync(tmp, filePath);
+  debugLog('file', 'write', { file: 'settings.json', theme: settings.theme });
 }
 
 export function moveDataFile(
@@ -71,5 +76,6 @@ export function moveDataFile(
     fs.copyFileSync(oldPath, newPath);
     fs.unlinkSync(oldPath);
   }
+  debugLog('file', 'move', { from: oldPath, to: newPath });
   return { ok: true };
 }

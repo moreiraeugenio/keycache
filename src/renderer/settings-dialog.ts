@@ -138,7 +138,10 @@ settingsCloseBtn.addEventListener('click', closeSettingsDialog);
 settingsCancelBtn.addEventListener('click', closeSettingsDialog);
 
 settingsDialog.addEventListener('click', (e) => {
-  if (e.target === settingsDialog) closeSettingsDialog();
+  if (e.target === settingsDialog) {
+    window.api.debugLog('action', 'backdrop-close', { dialog: 'settings' });
+    closeSettingsDialog();
+  }
 });
 
 settingsBrowseBtn.addEventListener('click', async () => {

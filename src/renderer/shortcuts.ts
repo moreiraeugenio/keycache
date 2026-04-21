@@ -95,6 +95,7 @@ export function updateKeyBindings(shortcuts: AppSettings['shortcuts']): void {
 async function activateSelected(): Promise<void> {
   const note = visibleNotes[selectedIndex];
   if (!note) return;
+  window.api.debugLog('shortcut', 'enter-copy-hide', { key: note.note_key });
   await navigator.clipboard.writeText(note.note_value);
   window.api.hideWindow();
 }
@@ -121,7 +122,10 @@ export function registerShortcuts(deps: ShortcutDeps): void {
   valueInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      if (!e.shiftKey) form.requestSubmit();
+      if (!e.shiftKey) {
+        window.api.debugLog('shortcut', 'value-enter-submit');
+        form.requestSubmit();
+      }
     }
   });
 
@@ -130,11 +134,13 @@ export function registerShortcuts(deps: ShortcutDeps): void {
       if (visibleNotes.length === 0) return;
       e.preventDefault();
       selectedIndex = (selectedIndex + 1) % visibleNotes.length;
+      window.api.debugLog('keynav', 'ArrowDown', { index: selectedIndex });
       updateSelectionClasses();
     } else if (e.key === 'ArrowUp') {
       if (visibleNotes.length === 0) return;
       e.preventDefault();
       selectedIndex = (selectedIndex - 1 + visibleNotes.length) % visibleNotes.length;
+      window.api.debugLog('keynav', 'ArrowUp', { index: selectedIndex });
       updateSelectionClasses();
     } else if (e.key === 'Enter') {
       if (visibleNotes.length === 0) return;
@@ -150,22 +156,27 @@ export function registerShortcuts(deps: ShortcutDeps): void {
     }
     if (e.key === 'Escape') {
       if (confirmDialog.open) {
+        window.api.debugLog('shortcut', 'escape', { target: 'confirmDialog' });
         closeConfirmDialog();
       } else if (formDialog.open) {
+        window.api.debugLog('shortcut', 'escape', { target: 'formDialog' });
         closeFormModal();
       }
     } else if (matchesBinding(e, newNoteBinding)) {
       if (formDialog.open || confirmDialog.open || settingsDialog.open) return;
       e.preventDefault();
+      window.api.debugLog('shortcut', 'newNote');
       openNewNoteModal();
     } else if (matchesBinding(e, focusSearchBinding)) {
       if (formDialog.open || confirmDialog.open || settingsDialog.open) return;
       e.preventDefault();
+      window.api.debugLog('shortcut', 'focusSearch');
       searchInput.focus();
       searchInput.select();
     } else if (matchesBinding(e, openSettingsBinding)) {
       if (formDialog.open || confirmDialog.open) return;
       e.preventDefault();
+      window.api.debugLog('shortcut', 'openSettings', { open: settingsDialog.open });
       if (settingsDialog.open) {
         closeSettingsDialog();
       } else {
@@ -174,6 +185,7 @@ export function registerShortcuts(deps: ShortcutDeps): void {
     } else if (matchesBinding(e, toggleVisibilityBinding)) {
       if (formDialog.open || confirmDialog.open || settingsDialog.open) return;
       e.preventDefault();
+      window.api.debugLog('shortcut', 'toggleVisibility');
       toggleValuesVisibility();
     }
   });

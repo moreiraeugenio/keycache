@@ -11,6 +11,7 @@ import {
   moveDataFile,
   type AppSettings,
 } from './settings';
+import { debugLog, registerDebugIpc } from './debug';
 
 function getDataFilePath(): string {
   if (process.env.KEYCACHE_DATA_FILE_PATH) {
@@ -44,6 +45,7 @@ const store: NotesStoreHolder = {
   current: createNotesStore(effectiveDataFilePath(settings)),
 };
 registerIpcHandlers(store);
+registerDebugIpc();
 
 let isQuitting = false;
 
@@ -77,9 +79,10 @@ function registerSettingsIpc(win: BrowserWindow): void {
 
       if (persisted.shortcuts.globalToggle !== settings.shortcuts.globalToggle) {
         unregisterShortcuts();
-        registerShortcuts(persisted.shortcuts.globalToggle, () =>
-          toggleWindow(win, win.getBounds()),
-        );
+        registerShortcuts(persisted.shortcuts.globalToggle, () => {
+          debugLog('global-shortcut', 'toggle');
+          toggleWindow(win, win.getBounds());
+        });
       }
 
       const themeChanged = persisted.theme !== settings.theme;
@@ -174,9 +177,10 @@ app.whenReady().then(() => {
     () => app.quit(),
   );
 
-  registerShortcuts(settings.shortcuts.globalToggle, () =>
-    toggleWindow(win, tray.getBounds()),
-  );
+  registerShortcuts(settings.shortcuts.globalToggle, () => {
+    debugLog('global-shortcut', 'toggle');
+    toggleWindow(win, tray.getBounds());
+  });
 
   registerSettingsIpc(win);
 

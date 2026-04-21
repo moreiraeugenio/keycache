@@ -45,6 +45,8 @@ const mocks = vi.hoisted(() => ({
   loadSettings: vi.fn(),
   saveSettings: vi.fn(),
   moveDataFile: vi.fn(),
+  debugLog: vi.fn(),
+  registerDebugIpc: vi.fn(),
 }));
 
 vi.mock('electron', () => ({
@@ -108,6 +110,11 @@ vi.mock('../../src/main/tray', () => ({
 vi.mock('../../src/main/shortcuts', () => ({
   registerShortcuts: mocks.registerShortcuts,
   unregisterShortcuts: mocks.unregisterShortcuts,
+}));
+
+vi.mock('../../src/main/debug', () => ({
+  debugLog: mocks.debugLog,
+  registerDebugIpc: mocks.registerDebugIpc,
 }));
 
 vi.mock('../../src/main/settings', () => ({
@@ -236,6 +243,11 @@ describe('main process (index.ts)', () => {
     expect(mocks.loadSettings).toHaveBeenCalledTimes(1);
     expect(mocks.createNotesStore).toHaveBeenCalledTimes(1);
     expect(mocks.registerIpc).toHaveBeenCalledTimes(1);
+  });
+
+  it('registers debug IPC at startup', async () => {
+    await importMain();
+    expect(mocks.registerDebugIpc).toHaveBeenCalledTimes(1);
   });
 
   it('passes store holder to registerIpcHandlers', async () => {
@@ -399,6 +411,14 @@ describe('main process (index.ts)', () => {
       });
     });
 
+    it('global-shortcut toggle callback emits debug log', async () => {
+      await importMain();
+      whenReadyCb!();
+      const shortcutToggle = mocks.registerShortcuts.mock.calls[0][1];
+      shortcutToggle();
+      expect(mocks.debugLog).toHaveBeenCalledWith('global-shortcut', 'toggle');
+    });
+
     it('registers settings IPC handlers', async () => {
       await importMain();
       whenReadyCb!();
@@ -559,6 +579,7 @@ describe('main process (index.ts)', () => {
       whenReadyCb!();
       mocks.unregisterShortcuts.mockClear();
       mocks.registerShortcuts.mockClear();
+      mocks.debugLog.mockClear();
 
       await ipcHandlers['settings:save'](
         {},
@@ -573,6 +594,7 @@ describe('main process (index.ts)', () => {
       const newToggle = mocks.registerShortcuts.mock.calls.at(-1)![1] as () => void;
       newToggle();
       expect(mocks.toggleWindow).toHaveBeenCalled();
+      expect(mocks.debugLog).toHaveBeenCalledWith('global-shortcut', 'toggle');
     });
 
     it('emits settings:theme-changed when theme changes', async () => {

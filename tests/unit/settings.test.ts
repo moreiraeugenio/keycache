@@ -1,7 +1,14 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+
+const debugMock = vi.hoisted(() => ({ debugLog: vi.fn() }));
+vi.mock('../../src/main/debug', () => ({
+  debugLog: debugMock.debugLog,
+  registerDebugIpc: vi.fn(),
+}));
+
 import {
   loadSettings,
   saveSettings,
@@ -13,6 +20,7 @@ let tmpDir: string;
 
 beforeEach(() => {
   tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'keycache-settings-'));
+  debugMock.debugLog.mockClear();
 });
 
 afterEach(() => {
@@ -195,5 +203,59 @@ describe('moveDataFile', () => {
     } finally {
       fs.renameSync = origRename;
     }
+  });
+});
+
+describe('debug logging', () => {
+  it('logs file read with theme on successful loadSettings', () => {
+    const filePath = path.join(tmpDir, 'settings.json');
+    fs.writeFileSync(filePath, JSON.stringify({ theme: 'dark' }), 'utf-8');
+    loadSettings(filePath);
+    expect(debugMock.debugLog).toHaveBeenCalledWith('file', 'read', {
+      file: 'settings.json',
+      theme: 'dark',
+    });
+  });
+
+  it('logs file read with fallback flag when settings file is invalid', () => {
+    const filePath = path.join(tmpDir, 'bad.json');
+    fs.writeFileSync(filePath, 'not-json', 'utf-8');
+    loadSettings(filePath);
+    expect(debugMock.debugLog).toHaveBeenCalledWith('file', 'read', {
+      file: 'settings.json',
+      fallback: true,
+    });
+  });
+
+  it('logs file write on saveSettings', () => {
+    const filePath = path.join(tmpDir, 'settings.json');
+    const settings = { ...getDefaultSettings(), theme: 'light' as const };
+    saveSettings(filePath, settings);
+    expect(debugMock.debugLog).toHaveBeenCalledWith('file', 'write', {
+      file: 'settings.json',
+      theme: 'light',
+    });
+  });
+
+  it('logs file move on successful moveDataFile', () => {
+    const src = path.join(tmpDir, 'src.json');
+    const dst = path.join(tmpDir, 'dst.json');
+    fs.writeFileSync(src, '{}');
+    moveDataFile(src, dst);
+    expect(debugMock.debugLog).toHaveBeenCalledWith('file', 'move', {
+      from: src,
+      to: dst,
+    });
+  });
+
+  it('does not log move when source does not exist', () => {
+    const src = path.join(tmpDir, 'missing.json');
+    const dst = path.join(tmpDir, 'dst.json');
+    moveDataFile(src, dst);
+    expect(debugMock.debugLog).not.toHaveBeenCalledWith(
+      'file',
+      'move',
+      expect.anything(),
+    );
   });
 });

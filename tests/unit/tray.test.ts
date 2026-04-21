@@ -10,6 +10,12 @@ const mocks = vi.hoisted(() => ({
   trayIconArg: null as unknown,
   setTemplateImage: vi.fn(),
   createFromPath: vi.fn(),
+  debugLog: vi.fn(),
+}));
+
+vi.mock('../../src/main/debug', () => ({
+  debugLog: mocks.debugLog,
+  registerDebugIpc: vi.fn(),
 }));
 
 vi.mock('electron', () => {
@@ -163,6 +169,36 @@ describe('tray', () => {
       const rightClickHandler = mocks.trayOn.mock.calls.find((c) => c[0] === 'right-click')![1];
       rightClickHandler();
       expect(mocks.popUpContextMenu).toHaveBeenCalled();
+    });
+
+    describe('debug logging', () => {
+      it('logs tray click', () => {
+        createTray(vi.fn(), vi.fn(), vi.fn(), vi.fn());
+        const clickHandler = mocks.trayOn.mock.calls.find((c) => c[0] === 'click')![1];
+        clickHandler({}, { x: 0, y: 0, width: 24, height: 24 });
+        expect(mocks.debugLog).toHaveBeenCalledWith('tray', 'click');
+      });
+
+      it('logs tray menu Settings', () => {
+        createTray(vi.fn(), vi.fn(), vi.fn(), vi.fn());
+        const template = mocks.buildFromTemplate.mock.calls[0][0];
+        template[0].click();
+        expect(mocks.debugLog).toHaveBeenCalledWith('tray', 'menu', { item: 'Settings' });
+      });
+
+      it('logs tray menu About', () => {
+        createTray(vi.fn(), vi.fn(), vi.fn(), vi.fn());
+        const template = mocks.buildFromTemplate.mock.calls[0][0];
+        template[2].click();
+        expect(mocks.debugLog).toHaveBeenCalledWith('tray', 'menu', { item: 'About' });
+      });
+
+      it('logs tray menu Quit', () => {
+        createTray(vi.fn(), vi.fn(), vi.fn(), vi.fn());
+        const template = mocks.buildFromTemplate.mock.calls[0][0];
+        template[3].click();
+        expect(mocks.debugLog).toHaveBeenCalledWith('tray', 'menu', { item: 'Quit' });
+      });
     });
   });
 });

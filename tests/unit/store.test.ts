@@ -2,6 +2,13 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+
+const debugMock = vi.hoisted(() => ({ debugLog: vi.fn() }));
+vi.mock('../../src/main/debug', () => ({
+  debugLog: debugMock.debugLog,
+  registerDebugIpc: vi.fn(),
+}));
+
 import { createNotesStore, type NotesStore } from '../../src/main/store';
 
 let store: NotesStore;
@@ -11,6 +18,7 @@ let filePath: string;
 beforeEach(() => {
   tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'keycache-test-'));
   filePath = path.join(tmpDir, 'notes.json');
+  debugMock.debugLog.mockClear();
   store = createNotesStore(filePath);
 });
 
@@ -52,6 +60,57 @@ describe('createNotesStore', () => {
     fs.writeFileSync(filePath, 'not json', 'utf-8');
     const reopened = createNotesStore(filePath);
     expect(reopened.getNotes()).toEqual([]);
+  });
+});
+
+describe('debug logging', () => {
+  it('logs file read on successful load', () => {
+    store.addNote('persisted', 'val');
+    debugMock.debugLog.mockClear();
+    createNotesStore(filePath);
+    expect(debugMock.debugLog).toHaveBeenCalledWith('file', 'read', {
+      file: 'notes.json',
+      notes: 1,
+    });
+  });
+
+  it('logs file read with fallback flag when file is missing/corrupt', () => {
+    fs.writeFileSync(filePath, 'not json', 'utf-8');
+    debugMock.debugLog.mockClear();
+    createNotesStore(filePath);
+    expect(debugMock.debugLog).toHaveBeenCalledWith('file', 'read', {
+      file: 'notes.json',
+      fallback: true,
+    });
+  });
+
+  it('logs file write on addNote', () => {
+    debugMock.debugLog.mockClear();
+    store.addNote('K', 'V');
+    expect(debugMock.debugLog).toHaveBeenCalledWith('file', 'write', {
+      file: 'notes.json',
+      notes: 1,
+    });
+  });
+
+  it('logs file write on updateNote', () => {
+    const id = store.addNote('K', 'V');
+    debugMock.debugLog.mockClear();
+    store.updateNote(id, 'K2', 'V2');
+    expect(debugMock.debugLog).toHaveBeenCalledWith('file', 'write', {
+      file: 'notes.json',
+      notes: 1,
+    });
+  });
+
+  it('logs file write on deleteNote', () => {
+    const id = store.addNote('K', 'V');
+    debugMock.debugLog.mockClear();
+    store.deleteNote(id);
+    expect(debugMock.debugLog).toHaveBeenCalledWith('file', 'write', {
+      file: 'notes.json',
+      notes: 0,
+    });
   });
 });
 

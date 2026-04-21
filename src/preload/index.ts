@@ -1,5 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
+const debugEnabled = Boolean(process.env.ELECTRON_RENDERER_URL);
+
 contextBridge.exposeInMainWorld('api', {
   getNotes: () => ipcRenderer.invoke('notes:getAll'),
   addNote: (key: string, value: string) => ipcRenderer.invoke('notes:add', key, value),
@@ -18,4 +20,9 @@ contextBridge.exposeInMainWorld('api', {
   onShortcutsChanged: (cb: (shortcuts: unknown) => void) =>
     ipcRenderer.on('settings:shortcuts-changed', (_e, shortcuts) => cb(shortcuts)),
   onSettingsOpen: (cb: () => void) => ipcRenderer.on('settings:open', () => cb()),
+
+  debugLog: debugEnabled
+    ? (scope: string, event: string, details?: Record<string, unknown>) =>
+        ipcRenderer.send('debug:log', scope, event, details)
+    : () => {},
 });

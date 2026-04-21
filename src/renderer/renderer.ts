@@ -56,9 +56,42 @@ const icons = {
   alert: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
 };
 
+// ---- Debug: delegated capture-phase click logger ----
+document.addEventListener(
+  'click',
+  (e) => {
+    const el = (e.target as HTMLElement | null)?.closest('button, [data-reset]');
+    if (!el) return;
+    const id = (el as HTMLElement).id;
+    if (id) {
+      window.api.debugLog('button', id);
+      return;
+    }
+    const label = el.getAttribute('aria-label') || '';
+    if (label.startsWith('Edit ')) {
+      window.api.debugLog('button', 'edit-note', { key: label.slice(5) });
+      return;
+    }
+    if (label.startsWith('Delete ')) {
+      window.api.debugLog('button', 'delete-note', { key: label.slice(7) });
+      return;
+    }
+    const resetKey = (el as HTMLElement).dataset.reset;
+    if (resetKey) {
+      window.api.debugLog('button', 'shortcut-reset', { key: resetKey });
+    }
+  },
+  true,
+);
+
 // ---- Settings button ----
 settingsBtn.innerHTML = gearIcon;
 settingsBtn.addEventListener('click', () => openSettingsDialog());
+
+function refocusSearch(): void {
+  searchInput.focus();
+  requestAnimationFrame(() => searchInput.focus());
+}
 
 // ---- Form modal ----
 function showFormError(message: string): void {
@@ -96,12 +129,15 @@ formCloseBtn.addEventListener('click', closeFormModal);
 cancelBtn.addEventListener('click', closeFormModal);
 
 formDialog.addEventListener('click', (e) => {
-  if (e.target === formDialog) closeFormModal();
+  if (e.target === formDialog) {
+    window.api.debugLog('action', 'backdrop-close', { dialog: 'form' });
+    closeFormModal();
+  }
 });
 
 formDialog.addEventListener('close', () => {
   window.api.setDialogOpen(false);
-  searchInput.focus();
+  refocusSearch();
 });
 
 // ---- Toast ----
@@ -178,6 +214,7 @@ function renderNotes(notes: Note[]): void {
 
     li.addEventListener('click', async (e) => {
       if ((e.target as HTMLElement).closest('.note-actions')) return;
+      window.api.debugLog('action', 'copy', { key: note.note_key });
       await navigator.clipboard.writeText(note.note_value);
       showToast(`Copied "${note.note_key}" to clipboard`);
     });
@@ -244,14 +281,17 @@ form.addEventListener('submit', async (e) => {
       return;
     }
     await window.api.updateNote(editIdNum!, key, value);
+    window.api.debugLog('action', 'form-submit', { mode: 'update', key, id: editIdNum! });
     showToast('Note updated');
   } else {
     await window.api.addNote(key, value);
+    window.api.debugLog('action', 'form-submit', { mode: 'add', key });
     showToast('Note added');
   }
 
   closeFormModal();
   await refreshNotes();
+  refocusSearch();
 });
 
 function startEdit(note: Note): void {
@@ -292,25 +332,31 @@ dialogCancel.addEventListener('click', closeConfirmDialog);
 
 dialogConfirm.addEventListener('click', async () => {
   if (pendingDeleteId != null) {
-    await window.api.deleteNote(pendingDeleteId);
+    const id = pendingDeleteId;
+    await window.api.deleteNote(id);
+    window.api.debugLog('action', 'delete', { id });
     pendingDeleteId = null;
     confirmDialog.close();
     showToast('Note deleted');
     await refreshNotes();
+    refocusSearch();
   }
 });
 
 confirmDialog.addEventListener('click', (e) => {
-  if (e.target === confirmDialog) closeConfirmDialog();
+  if (e.target === confirmDialog) {
+    window.api.debugLog('action', 'backdrop-close', { dialog: 'confirm' });
+    closeConfirmDialog();
+  }
 });
 
 confirmDialog.addEventListener('close', () => {
   window.api.setDialogOpen(false);
-  searchInput.focus();
+  refocusSearch();
 });
 settingsDialog.addEventListener('close', () => {
   window.api.setDialogOpen(false);
-  searchInput.focus();
+  refocusSearch();
 });
 
 // ---- Search (debounced) ----

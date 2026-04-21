@@ -1,5 +1,6 @@
 import { app, BrowserWindow, ipcMain, screen } from 'electron';
 import path from 'path';
+import { debugLog } from './debug';
 
 let dialogOpen = false;
 
@@ -90,6 +91,7 @@ export function getWindowPosition(
 }
 
 export function showWindow(win: BrowserWindow, trayBounds: Electron.Rectangle): void {
+  debugLog('window', 'show');
   const { x, y } = getWindowPosition(win, trayBounds);
   win.setPosition(x, y, false);
   if (process.platform === 'darwin') {
@@ -100,6 +102,7 @@ export function showWindow(win: BrowserWindow, trayBounds: Electron.Rectangle): 
 }
 
 export function hideWindow(win: BrowserWindow): void {
+  debugLog('window', 'hide');
   if (process.platform === 'darwin') {
     app.hide();
   } else {
@@ -108,7 +111,9 @@ export function hideWindow(win: BrowserWindow): void {
 }
 
 export function toggleWindow(win: BrowserWindow, trayBounds: Electron.Rectangle): void {
-  if (win.isVisible()) {
+  const visible = win.isVisible();
+  debugLog('window', 'toggle', { visible });
+  if (visible) {
     hideWindow(win);
   } else {
     showWindow(win, trayBounds);

@@ -1,4 +1,6 @@
 import fs from 'fs';
+import path from 'path';
+import { debugLog } from './debug';
 
 export interface Note {
   id: number;
@@ -21,17 +23,21 @@ export interface NotesStore {
   close(): void;
 }
 
-function load(filePath: string): StoreData {
+function load(filePath: string, filename: string): StoreData {
   try {
     const raw = fs.readFileSync(filePath, 'utf-8');
-    return JSON.parse(raw) as StoreData;
+    const data = JSON.parse(raw) as StoreData;
+    debugLog('file', 'read', { file: filename, notes: data.notes.length });
+    return data;
   } catch {
+    debugLog('file', 'read', { file: filename, fallback: true });
     return { nextId: 1, notes: [] };
   }
 }
 
-function save(filePath: string, data: StoreData): void {
+function save(filePath: string, filename: string, data: StoreData): void {
   fs.writeFileSync(filePath, JSON.stringify(data), 'utf-8');
+  debugLog('file', 'write', { file: filename, notes: data.notes.length });
 }
 
 function nowISO(): string {
@@ -39,7 +45,8 @@ function nowISO(): string {
 }
 
 export function createNotesStore(filePath: string): NotesStore {
-  const data = load(filePath);
+  const filename = path.basename(filePath);
+  const data = load(filePath, filename);
 
   return {
     getNotes() {
@@ -61,7 +68,7 @@ export function createNotesStore(filePath: string): NotesStore {
         updated_at: now,
       };
       data.notes.push(note);
-      save(filePath, data);
+      save(filePath, filename, data);
       return note.id;
     },
 
@@ -74,12 +81,12 @@ export function createNotesStore(filePath: string): NotesStore {
       note.note_key = key;
       note.note_value = value;
       note.updated_at = nowISO();
-      save(filePath, data);
+      save(filePath, filename, data);
     },
 
     deleteNote(id) {
       data.notes = data.notes.filter((n) => n.id !== id);
-      save(filePath, data);
+      save(filePath, filename, data);
     },
 
     close() {

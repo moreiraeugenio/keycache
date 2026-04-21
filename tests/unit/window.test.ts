@@ -37,6 +37,12 @@ const mockWebContentsOn = vi
 const mocks = vi.hoisted(() => ({
   bwConstructorArgs: null as unknown,
   ipcHandlers: {} as Record<string, (...args: unknown[]) => void>,
+  debugLog: vi.fn(),
+}));
+
+vi.mock('../../src/main/debug', () => ({
+  debugLog: mocks.debugLog,
+  registerDebugIpc: vi.fn(),
 }));
 
 vi.mock('electron', () => ({
@@ -323,6 +329,35 @@ describe('window', () => {
       toggleWindow(win, bounds);
       expect(mockAppHide).toHaveBeenCalled();
       expect(mockShow).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('debug logging', () => {
+    it('logs window show', () => {
+      const win = createTrayWindow();
+      const bounds = { x: 0, y: 0, width: 24, height: 24 };
+      showWindow(win, bounds);
+      expect(mocks.debugLog).toHaveBeenCalledWith('window', 'show');
+    });
+
+    it('logs window hide', () => {
+      const win = createTrayWindow();
+      hideWindow(win);
+      expect(mocks.debugLog).toHaveBeenCalledWith('window', 'hide');
+    });
+
+    it('logs window toggle with visible=true when window is visible', () => {
+      const win = createTrayWindow();
+      mockIsVisible.mockReturnValueOnce(true);
+      toggleWindow(win, { x: 0, y: 0, width: 24, height: 24 });
+      expect(mocks.debugLog).toHaveBeenCalledWith('window', 'toggle', { visible: true });
+    });
+
+    it('logs window toggle with visible=false when window is hidden', () => {
+      const win = createTrayWindow();
+      mockIsVisible.mockReturnValueOnce(false);
+      toggleWindow(win, { x: 0, y: 0, width: 24, height: 24 });
+      expect(mocks.debugLog).toHaveBeenCalledWith('window', 'toggle', { visible: false });
     });
   });
 });
