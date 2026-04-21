@@ -1,4 +1,4 @@
-import { BrowserWindow, ipcMain, screen } from 'electron';
+import { app, BrowserWindow, ipcMain, screen } from 'electron';
 import path from 'path';
 
 let dialogOpen = false;
@@ -37,17 +37,17 @@ export function createTrayWindow(): BrowserWindow {
 
   win.on('blur', () => {
     if (!dialogOpen && !win.webContents.isDevToolsOpened()) {
-      win.hide();
+      hideWindow(win);
     }
   });
 
   win.webContents.on('before-input-event', (_event, input) => {
     if (input.type === 'keyDown' && input.key === 'Escape' && !dialogOpen) {
-      win.hide();
+      hideWindow(win);
     }
   });
 
-  ipcMain.on('window:hide', () => win.hide());
+  ipcMain.on('window:hide', () => hideWindow(win));
 
   return win;
 }
@@ -92,12 +92,19 @@ export function getWindowPosition(
 export function showWindow(win: BrowserWindow, trayBounds: Electron.Rectangle): void {
   const { x, y } = getWindowPosition(win, trayBounds);
   win.setPosition(x, y, false);
+  if (process.platform === 'darwin') {
+    app.show();
+  }
   win.show();
   win.focus();
 }
 
 export function hideWindow(win: BrowserWindow): void {
-  win.hide();
+  if (process.platform === 'darwin') {
+    app.hide();
+  } else {
+    win.hide();
+  }
 }
 
 export function toggleWindow(win: BrowserWindow, trayBounds: Electron.Rectangle): void {

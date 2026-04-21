@@ -9,6 +9,12 @@ const mockGetBounds = vi.fn().mockReturnValue({ x: 0, y: 0, width: 400, height: 
 const mockIsDevToolsOpened = vi.fn().mockReturnValue(false);
 const mockLoadURL = vi.fn();
 const mockLoadFile = vi.fn();
+const appMocks = vi.hoisted(() => ({
+  hide: vi.fn(),
+  show: vi.fn(),
+}));
+const mockAppHide = appMocks.hide;
+const mockAppShow = appMocks.show;
 
 type BeforeInputHandler = (
   event: { preventDefault: () => void },
@@ -60,6 +66,7 @@ vi.mock('electron', () => ({
       bounds: { x: 0, y: 0, width: 1440, height: 900 },
     }),
   },
+  app: appMocks,
 }));
 
 import { screen } from 'electron';
@@ -132,16 +139,26 @@ describe('window', () => {
       expect(mockWinOn).toHaveBeenCalledWith('blur', expect.any(Function));
     });
 
-    it('blur handler hides window', () => {
+    it('blur handler hides window via app.hide on darwin', () => {
+      createTrayWindow();
+      blurHandler!();
+      expect(mockAppHide).toHaveBeenCalled();
+      expect(mockHide).not.toHaveBeenCalled();
+    });
+
+    it('blur handler uses win.hide on non-darwin', () => {
+      Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
       createTrayWindow();
       blurHandler!();
       expect(mockHide).toHaveBeenCalled();
+      expect(mockAppHide).not.toHaveBeenCalled();
     });
 
     it('blur handler does NOT hide when devtools are open', () => {
       createTrayWindow();
       mockIsDevToolsOpened.mockReturnValueOnce(true);
       blurHandler!();
+      expect(mockAppHide).not.toHaveBeenCalled();
       expect(mockHide).not.toHaveBeenCalled();
     });
 
@@ -151,6 +168,7 @@ describe('window', () => {
 
       createTrayWindow();
       blurHandler!();
+      expect(mockAppHide).not.toHaveBeenCalled();
       expect(mockHide).not.toHaveBeenCalled();
 
       // Reset dialog state
@@ -162,16 +180,17 @@ describe('window', () => {
       expect(mockWebContentsOn).toHaveBeenCalledWith('before-input-event', expect.any(Function));
     });
 
-    it('Escape keydown hides the window', () => {
+    it('Escape keydown hides the window via app.hide on darwin', () => {
       createTrayWindow();
       beforeInputHandler!({ preventDefault: vi.fn() }, { type: 'keyDown', key: 'Escape' });
-      expect(mockHide).toHaveBeenCalled();
+      expect(mockAppHide).toHaveBeenCalled();
     });
 
     it('Escape keydown does NOT hide when a dialog is open', () => {
       mocks.ipcHandlers['window:dialog-open']({}, true);
       createTrayWindow();
       beforeInputHandler!({ preventDefault: vi.fn() }, { type: 'keyDown', key: 'Escape' });
+      expect(mockAppHide).not.toHaveBeenCalled();
       expect(mockHide).not.toHaveBeenCalled();
       mocks.ipcHandlers['window:dialog-open']({}, false);
     });
@@ -179,19 +198,21 @@ describe('window', () => {
     it('non-Escape keydown does NOT hide the window', () => {
       createTrayWindow();
       beforeInputHandler!({ preventDefault: vi.fn() }, { type: 'keyDown', key: 'Enter' });
+      expect(mockAppHide).not.toHaveBeenCalled();
       expect(mockHide).not.toHaveBeenCalled();
     });
 
     it('Escape keyup does NOT hide the window', () => {
       createTrayWindow();
       beforeInputHandler!({ preventDefault: vi.fn() }, { type: 'keyUp', key: 'Escape' });
+      expect(mockAppHide).not.toHaveBeenCalled();
       expect(mockHide).not.toHaveBeenCalled();
     });
 
-    it('window:hide IPC hides the window', () => {
+    it('window:hide IPC hides the window via app.hide on darwin', () => {
       createTrayWindow();
       mocks.ipcHandlers['window:hide']({});
-      expect(mockHide).toHaveBeenCalled();
+      expect(mockAppHide).toHaveBeenCalled();
     });
   });
 
@@ -249,21 +270,40 @@ describe('window', () => {
   });
 
   describe('showWindow', () => {
-    it('sets position, shows, and focuses', () => {
+    it('sets position, shows, and focuses on darwin (with app.show)', () => {
       const win = createTrayWindow();
       const bounds = { x: 700, y: 0, width: 24, height: 24 };
       showWindow(win, bounds);
       expect(mockSetPosition).toHaveBeenCalled();
+      expect(mockAppShow).toHaveBeenCalled();
       expect(mockShow).toHaveBeenCalled();
       expect(mockFocus).toHaveBeenCalled();
+    });
+
+    it('does not call app.show on non-darwin', () => {
+      Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
+      const win = createTrayWindow();
+      const bounds = { x: 700, y: 0, width: 24, height: 24 };
+      showWindow(win, bounds);
+      expect(mockAppShow).not.toHaveBeenCalled();
+      expect(mockShow).toHaveBeenCalled();
     });
   });
 
   describe('hideWindow', () => {
-    it('hides the window', () => {
+    it('uses app.hide on darwin', () => {
+      const win = createTrayWindow();
+      hideWindow(win);
+      expect(mockAppHide).toHaveBeenCalled();
+      expect(mockHide).not.toHaveBeenCalled();
+    });
+
+    it('uses win.hide on non-darwin', () => {
+      Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
       const win = createTrayWindow();
       hideWindow(win);
       expect(mockHide).toHaveBeenCalled();
+      expect(mockAppHide).not.toHaveBeenCalled();
     });
   });
 
@@ -281,7 +321,7 @@ describe('window', () => {
       mockIsVisible.mockReturnValueOnce(true);
       const bounds = { x: 700, y: 0, width: 24, height: 24 };
       toggleWindow(win, bounds);
-      expect(mockHide).toHaveBeenCalled();
+      expect(mockAppHide).toHaveBeenCalled();
       expect(mockShow).not.toHaveBeenCalled();
     });
   });
