@@ -81,12 +81,15 @@ test('clicking the main area refocuses the search input', async ({ launched }) =
   await expect(page.locator('#search-input')).toBeFocused();
 });
 
-test('CmdOrCtrl+, opens the settings dialog', async ({ launched }) => {
+test('CmdOrCtrl+, toggles the settings dialog', async ({ launched }) => {
   const { page } = launched;
   await page.click('#search-input');
 
   await page.keyboard.press('Control+,');
   await expect(page.locator('#settings-dialog')).toBeVisible();
+
+  await page.keyboard.press('Control+,');
+  await expect(page.locator('#settings-dialog')).not.toBeVisible();
 });
 
 test('CmdOrCtrl+Shift+H toggles value visibility', async ({ launched }) => {

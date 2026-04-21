@@ -6,7 +6,11 @@ import {
   resetSelection,
   updateSelectionClasses,
 } from './shortcuts';
-import { openSettingsDialog, initSettingsListeners } from './settings-dialog';
+import {
+  openSettingsDialog,
+  closeSettingsDialog,
+  initSettingsListeners,
+} from './settings-dialog';
 
 // ---- DOM refs ----
 const form = document.getElementById('note-form') as HTMLFormElement;
@@ -79,7 +83,6 @@ function openFormModal(): void {
 function closeFormModal(): void {
   formDialog.close();
   resetForm();
-  window.api.setDialogOpen(false);
 }
 
 function openNewNoteModal(): void {
@@ -96,7 +99,10 @@ formDialog.addEventListener('click', (e) => {
   if (e.target === formDialog) closeFormModal();
 });
 
-formDialog.addEventListener('close', () => searchInput.focus());
+formDialog.addEventListener('close', () => {
+  window.api.setDialogOpen(false);
+  searchInput.focus();
+});
 
 // ---- Toast ----
 function showToast(message: string, variant: 'success' | 'error' = 'success'): void {
@@ -280,7 +286,6 @@ function confirmDelete(note: Note): void {
 function closeConfirmDialog(): void {
   pendingDeleteId = null;
   confirmDialog.close();
-  window.api.setDialogOpen(false);
 }
 
 dialogCancel.addEventListener('click', closeConfirmDialog);
@@ -290,7 +295,6 @@ dialogConfirm.addEventListener('click', async () => {
     await window.api.deleteNote(pendingDeleteId);
     pendingDeleteId = null;
     confirmDialog.close();
-    window.api.setDialogOpen(false);
     showToast('Note deleted');
     await refreshNotes();
   }
@@ -300,8 +304,14 @@ confirmDialog.addEventListener('click', (e) => {
   if (e.target === confirmDialog) closeConfirmDialog();
 });
 
-confirmDialog.addEventListener('close', () => searchInput.focus());
-settingsDialog.addEventListener('close', () => searchInput.focus());
+confirmDialog.addEventListener('close', () => {
+  window.api.setDialogOpen(false);
+  searchInput.focus();
+});
+settingsDialog.addEventListener('close', () => {
+  window.api.setDialogOpen(false);
+  searchInput.focus();
+});
 
 // ---- Search (debounced) ----
 let filterTimer: ReturnType<typeof setTimeout> | null = null;
@@ -394,6 +404,7 @@ registerShortcuts({
   closeFormModal,
   closeConfirmDialog,
   openSettingsDialog,
+  closeSettingsDialog,
   toggleValuesVisibility,
 });
 

@@ -10,6 +10,7 @@ interface ShortcutDeps {
   closeFormModal: () => void;
   closeConfirmDialog: () => void;
   openSettingsDialog: () => void;
+  closeSettingsDialog: () => void;
   toggleValuesVisibility: () => void;
 }
 
@@ -111,6 +112,7 @@ export function registerShortcuts(deps: ShortcutDeps): void {
     closeFormModal,
     closeConfirmDialog,
     openSettingsDialog,
+    closeSettingsDialog,
     toggleValuesVisibility,
   } = deps;
 
@@ -162,9 +164,13 @@ export function registerShortcuts(deps: ShortcutDeps): void {
       searchInput.focus();
       searchInput.select();
     } else if (matchesBinding(e, openSettingsBinding)) {
-      if (formDialog.open || confirmDialog.open || settingsDialog.open) return;
+      if (formDialog.open || confirmDialog.open) return;
       e.preventDefault();
-      openSettingsDialog();
+      if (settingsDialog.open) {
+        closeSettingsDialog();
+      } else {
+        openSettingsDialog();
+      }
     } else if (matchesBinding(e, toggleVisibilityBinding)) {
       if (formDialog.open || confirmDialog.open || settingsDialog.open) return;
       e.preventDefault();

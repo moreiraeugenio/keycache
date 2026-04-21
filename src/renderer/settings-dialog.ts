@@ -130,9 +130,8 @@ export async function openSettingsDialog(): Promise<void> {
   (document.activeElement as HTMLElement | null)?.blur();
 }
 
-function closeSettingsDialog(): void {
+export function closeSettingsDialog(): void {
   settingsDialog.close();
-  window.api.setDialogOpen(false);
 }
 
 settingsCloseBtn.addEventListener('click', closeSettingsDialog);
