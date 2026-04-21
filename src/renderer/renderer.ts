@@ -369,7 +369,7 @@ function applyMaskToRows(): void {
 
 applyVisibility();
 
-visibilityBtn.addEventListener('click', async () => {
+async function toggleValuesVisibility(): Promise<void> {
   valuesHidden = !valuesHidden;
   applyVisibility();
   applyMaskToRows();
@@ -377,7 +377,9 @@ visibilityBtn.addEventListener('click', async () => {
 
   const settings = await window.api.getSettings();
   await window.api.saveSettings({ ...settings, valuesHidden });
-});
+}
+
+visibilityBtn.addEventListener('click', toggleValuesVisibility);
 
 // ---- Init ----
 registerShortcuts({
@@ -391,6 +393,8 @@ registerShortcuts({
   openNewNoteModal,
   closeFormModal,
   closeConfirmDialog,
+  openSettingsDialog,
+  toggleValuesVisibility,
 });
 
 initSettingsListeners();

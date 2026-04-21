@@ -21,6 +21,8 @@ const shortcutInputs = {
   globalToggle: document.getElementById('shortcut-global-toggle') as HTMLInputElement,
   newNote: document.getElementById('shortcut-new-note') as HTMLInputElement,
   focusSearch: document.getElementById('shortcut-focus-search') as HTMLInputElement,
+  openSettings: document.getElementById('shortcut-open-settings') as HTMLInputElement,
+  toggleVisibility: document.getElementById('shortcut-toggle-visibility') as HTMLInputElement,
 };
 
 let currentThemeMode: AppSettings['theme'] = 'system';
@@ -33,6 +35,8 @@ const defaults: AppSettings['shortcuts'] = {
   globalToggle: 'CmdOrCtrl+Shift+K',
   newNote: 'CmdOrCtrl+N',
   focusSearch: 'CmdOrCtrl+F',
+  openSettings: 'CmdOrCtrl+,',
+  toggleVisibility: 'CmdOrCtrl+Shift+H',
 };
 
 const isMac = navigator.platform.startsWith('Mac');
@@ -91,6 +95,9 @@ function readForm(): AppSettings & { dataFileMode: 'new' | 'adopt' } {
       globalToggle: shortcutInputs.globalToggle.dataset.accel || defaults.globalToggle,
       newNote: shortcutInputs.newNote.dataset.accel || defaults.newNote,
       focusSearch: shortcutInputs.focusSearch.dataset.accel || defaults.focusSearch,
+      openSettings: shortcutInputs.openSettings.dataset.accel || defaults.openSettings,
+      toggleVisibility:
+        shortcutInputs.toggleVisibility.dataset.accel || defaults.toggleVisibility,
     },
     dataFileMode,
   };

@@ -85,7 +85,9 @@ function registerSettingsIpc(win: BrowserWindow): void {
       const themeChanged = persisted.theme !== settings.theme;
       const shortcutsChanged =
         persisted.shortcuts.newNote !== settings.shortcuts.newNote ||
-        persisted.shortcuts.focusSearch !== settings.shortcuts.focusSearch;
+        persisted.shortcuts.focusSearch !== settings.shortcuts.focusSearch ||
+        persisted.shortcuts.openSettings !== settings.shortcuts.openSettings ||
+        persisted.shortcuts.toggleVisibility !== settings.shortcuts.toggleVisibility;
 
       settings = {
         ...persisted,

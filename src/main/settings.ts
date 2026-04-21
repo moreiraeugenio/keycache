@@ -9,6 +9,8 @@ export interface AppSettings {
     globalToggle: string;
     newNote: string;
     focusSearch: string;
+    openSettings: string;
+    toggleVisibility: string;
   };
 }
 
@@ -21,6 +23,8 @@ export function getDefaultSettings(): AppSettings {
       globalToggle: 'CmdOrCtrl+Shift+K',
       newNote: 'CmdOrCtrl+N',
       focusSearch: 'CmdOrCtrl+F',
+      openSettings: 'CmdOrCtrl+,',
+      toggleVisibility: 'CmdOrCtrl+Shift+H',
     },
   };
 }

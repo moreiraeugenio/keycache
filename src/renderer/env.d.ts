@@ -14,6 +14,8 @@ interface AppSettings {
     globalToggle: string;
     newNote: string;
     focusSearch: string;
+    openSettings: string;
+    toggleVisibility: string;
   };
 }
 

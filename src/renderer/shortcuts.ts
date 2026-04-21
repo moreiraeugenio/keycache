@@ -9,6 +9,8 @@ interface ShortcutDeps {
   openNewNoteModal: () => void;
   closeFormModal: () => void;
   closeConfirmDialog: () => void;
+  openSettingsDialog: () => void;
+  toggleValuesVisibility: () => void;
 }
 
 interface ParsedBinding {
@@ -49,6 +51,8 @@ let notesListEl: HTMLUListElement | null = null;
 
 let newNoteBinding = parseAccelerator('CmdOrCtrl+N');
 let focusSearchBinding = parseAccelerator('CmdOrCtrl+F');
+let openSettingsBinding = parseAccelerator('CmdOrCtrl+,');
+let toggleVisibilityBinding = parseAccelerator('CmdOrCtrl+Shift+H');
 
 export function getSelectedIndex(): number {
   return selectedIndex;
@@ -83,6 +87,8 @@ export function updateSelectionClasses(): void {
 export function updateKeyBindings(shortcuts: AppSettings['shortcuts']): void {
   newNoteBinding = parseAccelerator(shortcuts.newNote);
   focusSearchBinding = parseAccelerator(shortcuts.focusSearch);
+  openSettingsBinding = parseAccelerator(shortcuts.openSettings);
+  toggleVisibilityBinding = parseAccelerator(shortcuts.toggleVisibility);
 }
 
 async function activateSelected(): Promise<void> {
@@ -104,6 +110,8 @@ export function registerShortcuts(deps: ShortcutDeps): void {
     openNewNoteModal,
     closeFormModal,
     closeConfirmDialog,
+    openSettingsDialog,
+    toggleValuesVisibility,
   } = deps;
 
   notesListEl = notesList;
@@ -153,6 +161,14 @@ export function registerShortcuts(deps: ShortcutDeps): void {
       e.preventDefault();
       searchInput.focus();
       searchInput.select();
+    } else if (matchesBinding(e, openSettingsBinding)) {
+      if (formDialog.open || confirmDialog.open || settingsDialog.open) return;
+      e.preventDefault();
+      openSettingsDialog();
+    } else if (matchesBinding(e, toggleVisibilityBinding)) {
+      if (formDialog.open || confirmDialog.open || settingsDialog.open) return;
+      e.preventDefault();
+      toggleValuesVisibility();
     }
   });
 }

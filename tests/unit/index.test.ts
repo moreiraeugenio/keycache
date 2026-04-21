@@ -119,6 +119,8 @@ vi.mock('../../src/main/settings', () => ({
       globalToggle: 'CmdOrCtrl+Shift+K',
       newNote: 'CmdOrCtrl+N',
       focusSearch: 'CmdOrCtrl+F',
+      openSettings: 'CmdOrCtrl+,',
+      toggleVisibility: 'CmdOrCtrl+Shift+H',
     },
   })),
   saveSettings: mocks.saveSettings,
@@ -131,6 +133,8 @@ vi.mock('../../src/main/settings', () => ({
       globalToggle: 'CmdOrCtrl+Shift+K',
       newNote: 'CmdOrCtrl+N',
       focusSearch: 'CmdOrCtrl+F',
+      openSettings: 'CmdOrCtrl+,',
+      toggleVisibility: 'CmdOrCtrl+Shift+H',
     },
   }),
 }));
@@ -452,6 +456,8 @@ describe('main process (index.ts)', () => {
       globalToggle: 'CmdOrCtrl+Shift+K',
       newNote: 'CmdOrCtrl+N',
       focusSearch: 'CmdOrCtrl+F',
+      openSettings: 'CmdOrCtrl+,',
+      toggleVisibility: 'CmdOrCtrl+Shift+H',
     };
 
     function basePayload(overrides: Record<string, unknown> = {}) {
@@ -603,6 +609,40 @@ describe('main process (index.ts)', () => {
       expect(mockWebContents.send).toHaveBeenCalledWith(
         'settings:shortcuts-changed',
         expect.objectContaining({ newNote: 'CmdOrCtrl+M' }),
+      );
+    });
+
+    it('emits settings:shortcuts-changed when openSettings changes', async () => {
+      await importMain();
+      whenReadyCb!();
+      mockWebContents.send.mockClear();
+
+      await ipcHandlers['settings:save'](
+        {},
+        basePayload({ shortcuts: { ...baseShortcuts, openSettings: 'CmdOrCtrl+.' } }),
+      );
+
+      expect(mockWebContents.send).toHaveBeenCalledWith(
+        'settings:shortcuts-changed',
+        expect.objectContaining({ openSettings: 'CmdOrCtrl+.' }),
+      );
+    });
+
+    it('emits settings:shortcuts-changed when toggleVisibility changes', async () => {
+      await importMain();
+      whenReadyCb!();
+      mockWebContents.send.mockClear();
+
+      await ipcHandlers['settings:save'](
+        {},
+        basePayload({
+          shortcuts: { ...baseShortcuts, toggleVisibility: 'CmdOrCtrl+Shift+V' },
+        }),
+      );
+
+      expect(mockWebContents.send).toHaveBeenCalledWith(
+        'settings:shortcuts-changed',
+        expect.objectContaining({ toggleVisibility: 'CmdOrCtrl+Shift+V' }),
       );
     });
   });

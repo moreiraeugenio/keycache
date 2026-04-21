@@ -80,3 +80,26 @@ test('clicking the main area refocuses the search input', async ({ launched }) =
   await page.locator('.main').dispatchEvent('mousedown');
   await expect(page.locator('#search-input')).toBeFocused();
 });
+
+test('CmdOrCtrl+, opens the settings dialog', async ({ launched }) => {
+  const { page } = launched;
+  await page.click('#search-input');
+
+  await page.keyboard.press('Control+,');
+  await expect(page.locator('#settings-dialog')).toBeVisible();
+});
+
+test('CmdOrCtrl+Shift+H toggles value visibility', async ({ launched }) => {
+  const { page } = launched;
+  await addNote(page, 'SECRET', 'visible');
+
+  const value = page.locator('.note-value');
+  await expect(value).not.toHaveClass(/masked/);
+
+  await page.click('#search-input');
+  await page.keyboard.press('Control+Shift+H');
+  await expect(value).toHaveClass(/masked/);
+
+  await page.keyboard.press('Control+Shift+H');
+  await expect(value).not.toHaveClass(/masked/);
+});

@@ -28,6 +28,8 @@ describe('getDefaultSettings', () => {
     expect(defaults.shortcuts.globalToggle).toBe('CmdOrCtrl+Shift+K');
     expect(defaults.shortcuts.newNote).toBe('CmdOrCtrl+N');
     expect(defaults.shortcuts.focusSearch).toBe('CmdOrCtrl+F');
+    expect(defaults.shortcuts.openSettings).toBe('CmdOrCtrl+,');
+    expect(defaults.shortcuts.toggleVisibility).toBe('CmdOrCtrl+Shift+H');
   });
 });
 
@@ -72,6 +74,8 @@ describe('loadSettings', () => {
     expect(settings.shortcuts.newNote).toBe('CmdOrCtrl+M');
     expect(settings.shortcuts.globalToggle).toBe('CmdOrCtrl+Shift+K');
     expect(settings.shortcuts.focusSearch).toBe('CmdOrCtrl+F');
+    expect(settings.shortcuts.openSettings).toBe('CmdOrCtrl+,');
+    expect(settings.shortcuts.toggleVisibility).toBe('CmdOrCtrl+Shift+H');
   });
 
   it('loads fully stored settings', () => {
@@ -84,6 +88,8 @@ describe('loadSettings', () => {
         globalToggle: 'CmdOrCtrl+Shift+J',
         newNote: 'CmdOrCtrl+M',
         focusSearch: 'CmdOrCtrl+G',
+        openSettings: 'CmdOrCtrl+.',
+        toggleVisibility: 'CmdOrCtrl+Shift+V',
       },
     };
     fs.writeFileSync(filePath, JSON.stringify(stored), 'utf-8');
