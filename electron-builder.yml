@@ -21,6 +21,9 @@ mac:
     - dmg
     - zip
   category: public.app-category.productivity
+  extraResources:
+    - from: build/Credits.rtf
+      to: Credits.rtf
 win:
   target:
     - nsis

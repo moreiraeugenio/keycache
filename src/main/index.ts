@@ -1,4 +1,4 @@
-import { app, dialog, ipcMain, type BrowserWindow } from 'electron';
+import { app, dialog, ipcMain, shell, type BrowserWindow } from 'electron';
 import path from 'path';
 import { createNotesStore } from './store';
 import { registerIpcHandlers, type NotesStoreHolder } from './ipc';
@@ -131,10 +131,12 @@ app.whenReady().then(() => {
 
   app.setAboutPanelOptions({
     applicationName: 'Keycache',
-    applicationVersion: app.getVersion(),
+    applicationVersion: `Version ${app.getVersion()}`,
     version: '',
-    credits: 'Built with Electron',
-    copyright: `\u00A9 ${new Date().getFullYear()}`,
+    copyright: '\u00A9 2026 Eugênio Moreira',
+    ...(app.isPackaged
+      ? {}
+      : { credits: 'Check on GitHub \u00B7 github.com/moreiraeugenio/keycache' }),
   });
 
   const tray = createTray(
@@ -147,12 +149,21 @@ app.whenReady().then(() => {
       if (process.platform === 'darwin') {
         app.showAboutPanel();
       } else {
-        dialog.showMessageBox(win, {
-          type: 'info',
-          title: 'About Keycache',
-          message: `Keycache v${app.getVersion()}`,
-          detail: `Built with Electron\n\u00A9 ${new Date().getFullYear()}`,
-        });
+        dialog
+          .showMessageBox(win, {
+            type: 'info',
+            title: 'About Keycache',
+            message: `Keycache Version ${app.getVersion()}`,
+            detail: '\u00A9 2026 Eugênio Moreira',
+            buttons: ['OK', 'Check on GitHub'],
+            defaultId: 0,
+            cancelId: 0,
+          })
+          .then(({ response }) => {
+            if (response === 1) {
+              shell.openExternal('https://github.com/moreiraeugenio/keycache');
+            }
+          });
       }
     },
     () => app.quit(),

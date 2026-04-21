@@ -81,6 +81,9 @@ vi.mock('electron', () => ({
     showOpenDialog: vi.fn().mockResolvedValue({ canceled: true, filePaths: [] }),
     showMessageBox: vi.fn().mockResolvedValue({ response: 0 }),
   },
+  shell: {
+    openExternal: vi.fn().mockResolvedValue(undefined),
+  },
 }));
 
 vi.mock('../../src/main/store', () => ({
@@ -298,6 +301,24 @@ describe('main process (index.ts)', () => {
       expect(elApp.showAboutPanel).toHaveBeenCalled();
     });
 
+    it('sets About panel credits in dev mode', async () => {
+      await importMain();
+      whenReadyCb!();
+      const { app: elApp } = await import('electron');
+      expect(elApp.setAboutPanelOptions).toHaveBeenCalledWith(
+        expect.objectContaining({ credits: expect.stringContaining('github.com') }),
+      );
+    });
+
+    it('omits About panel credits when packaged (so AppKit picks up Credits.rtf)', async () => {
+      mocks.isPackaged = true;
+      await importMain();
+      whenReadyCb!();
+      const { app: elApp } = await import('electron');
+      const opts = (elApp.setAboutPanelOptions as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      expect(opts).not.toHaveProperty('credits');
+    });
+
     it('tray about callback shows message box on non-macOS', async () => {
       Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
       await importMain();
@@ -309,6 +330,36 @@ describe('main process (index.ts)', () => {
         mockWin,
         expect.objectContaining({ type: 'info', title: 'About Keycache' }),
       );
+    });
+
+    it('opens GitHub URL when "Check on GitHub" button is clicked on non-macOS', async () => {
+      Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
+      const { dialog: elDialog, shell: elShell } = await import('electron');
+      (elDialog.showMessageBox as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        response: 1,
+      });
+      await importMain();
+      whenReadyCb!();
+      const onAbout = mocks.createTray.mock.calls[0][2];
+      onAbout();
+      await new Promise((r) => setImmediate(r));
+      expect(elShell.openExternal).toHaveBeenCalledWith(
+        'https://github.com/moreiraeugenio/keycache',
+      );
+    });
+
+    it('does not open GitHub URL when OK is clicked on non-macOS', async () => {
+      Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
+      const { dialog: elDialog, shell: elShell } = await import('electron');
+      (elDialog.showMessageBox as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        response: 0,
+      });
+      await importMain();
+      whenReadyCb!();
+      const onAbout = mocks.createTray.mock.calls[0][2];
+      onAbout();
+      await new Promise((r) => setImmediate(r));
+      expect(elShell.openExternal).not.toHaveBeenCalled();
     });
 
     it('tray quit callback calls app.quit', async () => {
