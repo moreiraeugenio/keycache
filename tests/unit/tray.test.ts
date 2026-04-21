@@ -65,11 +65,19 @@ describe('tray', () => {
   });
 
   describe('getTrayIconPath', () => {
-    it('returns Template.png on macOS in dev', () => {
+    it('returns dev template on macOS in dev', () => {
       Object.defineProperty(process, 'platform', { value: 'darwin', configurable: true });
       const p = getTrayIconPath();
-      expect(p).toContain('trayIconTemplate.png');
+      expect(p).toContain('trayIconTemplate-dev.png');
       expect(p).toContain('resources');
+    });
+
+    it('returns non-dev template on macOS when packaged', () => {
+      mocks.isPackaged = true;
+      (process as { resourcesPath?: string }).resourcesPath = '/packaged/resources';
+      Object.defineProperty(process, 'platform', { value: 'darwin', configurable: true });
+      const p = getTrayIconPath();
+      expect(p).toBe('/packaged/resources/trayIconTemplate.png');
     });
 
     it('returns .ico on Windows in dev', () => {
@@ -84,13 +92,6 @@ describe('tray', () => {
       expect(p).toContain('tray-icon.png');
     });
 
-    it('uses resourcesPath when packaged', () => {
-      mocks.isPackaged = true;
-      (process as { resourcesPath?: string }).resourcesPath = '/packaged/resources';
-      Object.defineProperty(process, 'platform', { value: 'darwin', configurable: true });
-      const p = getTrayIconPath();
-      expect(p).toContain('/packaged/resources');
-    });
   });
 
   describe('createTray', () => {

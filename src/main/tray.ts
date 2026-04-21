@@ -7,7 +7,8 @@ export function getTrayIconPath(): string {
     : path.join(__dirname, '../../resources');
 
   if (process.platform === 'darwin') {
-    return path.join(resourceBase, 'trayIconTemplate.png');
+    const icon = app.isPackaged ? 'trayIconTemplate.png' : 'trayIconTemplate-dev.png';
+    return path.join(resourceBase, icon);
   }
   if (process.platform === 'win32') {
     return path.join(resourceBase, 'tray-icon.ico');
