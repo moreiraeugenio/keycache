@@ -15,6 +15,94 @@ test('saving a new note via keyboard returns focus to search', async ({ launched
   await expect(page.locator('#search-input')).toBeFocused();
 });
 
+test('Cmd+N then typed-key flow refocuses search after save', async ({ launched }) => {
+  const { page } = launched;
+  await page.click('#search-input');
+
+  await page.keyboard.press('Control+n');
+  await expect(page.locator('#form-dialog')).toBeVisible();
+
+  await page.keyboard.type('TYPED_KEY');
+  await page.keyboard.press('Tab');
+  await page.keyboard.type('typed_value');
+  await page.keyboard.press('Enter');
+
+  await expect(page.locator('.note-key')).toHaveText('TYPED_KEY');
+  await expect(page.locator('#search-input')).toBeFocused();
+});
+
+test('Cmd+N from existing notes list refocuses search after save', async ({ launched }) => {
+  const { page } = launched;
+  await addNote(page, 'EXISTING_A', 'a');
+  await addNote(page, 'EXISTING_B', 'b');
+
+  await page.click('#search-input');
+  await page.keyboard.press('Control+n');
+  await expect(page.locator('#form-dialog')).toBeVisible();
+
+  await page.keyboard.type('NEW_THIRD');
+  await page.keyboard.press('Tab');
+  await page.keyboard.type('third_value');
+  await page.keyboard.press('Enter');
+
+  await expect(page.locator('.note-row')).toHaveCount(3);
+  await expect(page.locator('#search-input')).toBeFocused();
+});
+
+test('Cmd+N when search has text refocuses search after save', async ({ launched }) => {
+  const { page } = launched;
+  await addNote(page, 'API_KEY', 'a');
+
+  await page.click('#search-input');
+  await page.keyboard.type('API');
+  await page.keyboard.press('Control+n');
+  await expect(page.locator('#form-dialog')).toBeVisible();
+
+  await page.keyboard.type('NEW_KEY');
+  await page.keyboard.press('Tab');
+  await page.keyboard.type('new_value');
+  await page.keyboard.press('Enter');
+
+  await expect(page.locator('#search-input')).toBeFocused();
+});
+
+test('Cmd+N then Tab to submit button + Enter refocuses search', async ({ launched }) => {
+  const { page } = launched;
+  await page.click('#search-input');
+
+  await page.keyboard.press('Control+n');
+  await expect(page.locator('#form-dialog')).toBeVisible();
+
+  await page.keyboard.type('TAB_KEY');
+  await page.keyboard.press('Tab');
+  await page.keyboard.type('tab_value');
+  await page.keyboard.press('Tab'); // to cancel
+  await page.keyboard.press('Tab'); // to submit
+  await expect(page.locator('#submit-btn')).toBeFocused();
+  await page.keyboard.press('Enter');
+
+  await expect(page.locator('.note-key')).toHaveText('TAB_KEY');
+  await expect(page.locator('#search-input')).toBeFocused();
+});
+
+test('Cmd+N from a row click refocuses search after save', async ({ launched }) => {
+  const { page } = launched;
+  await addNote(page, 'EXISTING', 'val');
+
+  // Move focus away from search by interacting with toolbar buttons
+  await page.locator('#add-btn').focus();
+  await page.keyboard.press('Control+n');
+  await expect(page.locator('#form-dialog')).toBeVisible();
+
+  await page.keyboard.type('NEW_ONE');
+  await page.keyboard.press('Tab');
+  await page.keyboard.type('new_val');
+  await page.keyboard.press('Enter');
+
+  await expect(page.locator('.note-row')).toHaveCount(2);
+  await expect(page.locator('#search-input')).toBeFocused();
+});
+
 test('saving an edited note via keyboard returns focus to search', async ({ launched }) => {
   const { page } = launched;
   await addNote(page, 'EDIT_ME', 'before');
