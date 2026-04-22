@@ -67,6 +67,8 @@ The window starts hidden — look for the Keycache icon in the menu bar / system
 | `npm run dist` | Build + create distributable installer to `dist/` |
 | `npm run version:preview` | Show the bump level picked from commits since the last tag (dry run) |
 | `npm run version:auto` | Bump `package.json` + tag based on commits since the last tag |
+| `npm run release` | Full release flow: sync, checks, bump, push (one command) |
+| `npm run release:dry-run` | Run all checks and the bump preview, stop before mutating anything |
 
 ## Releases
 
@@ -74,55 +76,49 @@ Releases are built and published via GitHub Actions (`.github/workflows/release.
 
 ### Cutting a release
 
-1. Sync `main` so the release reflects everything that's been merged:
+The fast path — one command that does everything:
 
-   ```bash
-   git switch main
-   git pull
-   ```
+```bash
+npm run release
+```
 
-2. Verify your local Node matches `.nvmrc` (run `nvm use` / `fnm use` if not):
+It runs these checks in order, aborting on the first failure:
 
-   ```bash
-   node --version
-   ```
+1. On the `main` branch
+2. Working tree is clean (no uncommitted changes)
+3. Fast-forward with `origin/main` (pulls if behind; aborts if diverged or ahead)
+4. Local Node matches `.nvmrc`
+5. `npm ci`
+6. `npm run lint && npm run test && npm run build`
 
-3. Run local sanity checks:
-
-   ```bash
-   npm ci
-   npm run lint && npm run test && npm run build
-   ```
-
-4. Bump the version and tag. The easiest way is to let the tooling pick the level from the [Conventional Commit](https://www.conventionalcommits.org) prefixes since the last tag:
-
-   ```bash
-   npm run version:preview    # inspect the chosen bump first
-   npm run version:auto       # bump + tag with it
-   ```
-
-   The script maps commits to [semver](https://semver.org) levels:
-
-   - **patch** — bugfix, no behavior change (`fix:`, `chore:`, `docs:`, `refactor:`, `test:`, `ci:`, `build:`, `perf:`, `style:`, `revert:`)
-   - **minor** — new feature, backwards-compatible (`feat:`)
-   - **major** — breaking change (any type with `!` like `feat!:` / `fix!:`, or a `BREAKING CHANGE:` footer)
-
-   The highest-severity match across all commits since the last tag wins. If you'd rather pick by hand:
-
-   ```bash
-   npm version <patch|minor|major> -m "chore: release v%s"
-   ```
-
-   Either way, `npm version` bumps `package.json`, creates a commit with that message, and creates an annotated `v<x.y.z>` tag on that commit.
-
-5. Push the commit and tag:
-
-   ```bash
-   git push origin main
-   git push --tags
-   ```
+Then it previews the bump (same rules as `npm run version:preview`) and asks for a single `[y/N]` confirmation before running `npm version <level> -m "chore: release v%s"`, `git push origin main`, and `git push --tags`.
 
 Pushing the `v*` tag triggers the workflow. Each of the three OS runners builds its native artifacts in parallel on `macos-latest` / `windows-latest` / `ubuntu-latest`; a final job collects them and **publishes** a GitHub Release with auto-generated notes, visible to the public immediately.
+
+Run `npm run release:dry-run` to exercise every guard and see the bump preview without mutating anything.
+
+The bump level comes from [Conventional Commit](https://www.conventionalcommits.org) prefixes since the last tag, mapped to [semver](https://semver.org):
+
+- **patch** — bugfix, no behavior change (`fix:`, `chore:`, `docs:`, `refactor:`, `test:`, `ci:`, `build:`, `perf:`, `style:`, `revert:`)
+- **minor** — new feature, backwards-compatible (`feat:`)
+- **major** — breaking change (any type with `!` like `feat!:` / `fix!:`, or a `BREAKING CHANGE:` footer)
+
+The highest-severity match across all commits since the last tag wins.
+
+#### Manual fallback
+
+If you'd rather run the steps by hand (to pick a different bump level, skip `npm ci`, etc.):
+
+```bash
+git switch main
+git pull
+nvm use                                        # or `fnm use`
+npm ci
+npm run lint && npm run test && npm run build
+npm version <patch|minor|major> -m "chore: release v%s"
+git push origin main
+git push --tags
+```
 
 ### Manual build (no release)
 

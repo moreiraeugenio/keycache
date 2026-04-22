@@ -1,29 +1,28 @@
 #!/usr/bin/env node
 import { execSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
 
-const dryRun = process.argv.includes('--dry-run')
-
-function git(cmd) {
+export function git(cmd) {
   return execSync(`git ${cmd}`, { encoding: 'utf8' })
 }
 
-let lastTag
-try {
-  lastTag = git('describe --tags --abbrev=0').trim()
-} catch {
-  console.error('No git tags found. Create an initial tag first (e.g. git tag v0.0.1).')
-  process.exit(1)
+export function getLastTag() {
+  try {
+    return git('describe --tags --abbrev=0').trim()
+  } catch {
+    return null
+  }
 }
 
-const raw = git(`log ${lastTag}..HEAD --format=%B%x00`)
-const commits = raw.split('\0').map((c) => c.trim()).filter(Boolean)
-
-if (commits.length === 0) {
-  console.error(`No commits since ${lastTag}.`)
-  process.exit(1)
+export function getCommitsSinceTag(tag) {
+  const raw = git(`log ${tag}..HEAD --format=%B%x00`)
+  return raw
+    .split('\0')
+    .map((c) => c.trim())
+    .filter(Boolean)
 }
 
-function classify(commit) {
+export function classify(commit) {
   const subject = commit.split('\n', 1)[0]
   if (/^[a-z]+(\([^)]+\))?!:/.test(subject)) return 'major'
   if (/^BREAKING CHANGE:/m.test(commit)) return 'major'
@@ -31,26 +30,47 @@ function classify(commit) {
   return 'patch'
 }
 
-const classified = commits.map((c) => ({
-  subject: c.split('\n', 1)[0],
-  level: classify(c),
-}))
-
-const bump = classified.some((c) => c.level === 'major')
-  ? 'major'
-  : classified.some((c) => c.level === 'minor')
-    ? 'minor'
-    : 'patch'
-
-console.log(`Commits since ${lastTag}:`)
-for (const { subject, level } of classified) {
-  console.log(`  [${level.padEnd(5)}] ${subject}`)
-}
-console.log(`\nBump: ${bump}`)
-
-if (dryRun) {
-  console.log('(dry run — no version change)')
-  process.exit(0)
+export function pickBump(commits) {
+  const levels = commits.map(classify)
+  if (levels.includes('major')) return 'major'
+  if (levels.includes('minor')) return 'minor'
+  return 'patch'
 }
 
-execSync(`npm version ${bump} -m "chore: release v%s"`, { stdio: 'inherit' })
+export function printPreview(lastTag, commits) {
+  console.log(`Commits since ${lastTag}:`)
+  for (const c of commits) {
+    console.log(`  [${classify(c).padEnd(5)}] ${c.split('\n', 1)[0]}`)
+  }
+  console.log(`\nBump: ${pickBump(commits)}`)
+}
+
+function main() {
+  const dryRun = process.argv.includes('--dry-run')
+
+  const lastTag = getLastTag()
+  if (!lastTag) {
+    console.error('No git tags found. Create an initial tag first (e.g. git tag v0.0.1).')
+    process.exit(1)
+  }
+
+  const commits = getCommitsSinceTag(lastTag)
+  if (commits.length === 0) {
+    console.error(`No commits since ${lastTag}.`)
+    process.exit(1)
+  }
+
+  printPreview(lastTag, commits)
+
+  if (dryRun) {
+    console.log('(dry run — no version change)')
+    return
+  }
+
+  const bump = pickBump(commits)
+  execSync(`npm version ${bump} -m "chore: release v%s"`, { stdio: 'inherit' })
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main()
+}

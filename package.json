@@ -23,6 +23,8 @@
     "dist": "electron-vite build && electron-builder --publish never",
     "version:preview": "node scripts/version-bump.mjs --dry-run",
     "version:auto": "node scripts/version-bump.mjs",
+    "release": "node scripts/release.mjs",
+    "release:dry-run": "node scripts/release.mjs --dry-run",
     "prepare": "husky"
   },
   "devDependencies": {
