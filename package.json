@@ -21,6 +21,8 @@
     "test:e2e": "electron-vite build && npx playwright test --config tests/e2e/playwright.config.ts",
     "package": "electron-vite build && electron-builder --dir",
     "dist": "electron-vite build && electron-builder --publish never",
+    "version:preview": "node scripts/version-bump.mjs --dry-run",
+    "version:auto": "node scripts/version-bump.mjs",
     "prepare": "husky"
   },
   "devDependencies": {

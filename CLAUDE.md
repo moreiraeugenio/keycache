@@ -16,6 +16,8 @@ npm run test               # unit tests (Vitest)
 npm run test:e2e           # E2E tests (Playwright + Electron) — builds app, then runs
 npm run package            # build + package unpacked app to dist/
 npm run dist               # build + create distributable installer to dist/
+npm run version:preview    # show bump level picked from commits since last tag (dry run)
+npm run version:auto       # bump package.json + tag based on commits since last tag
 ```
 
 ## Architecture
@@ -83,7 +85,7 @@ tests/
 - **Production paths:** Data and settings JSON files at `app.getPath('userData')` when packaged (data file overridable via `settings.dataFilePath` or `KEYCACHE_DATA_FILE_PATH`), `app.getAppPath()` (repo root) in dev. Tray icons at `process.resourcesPath` when packaged (via `extraResources` in `electron-builder.yml`).
 - **Test isolation:** E2E tests set `KEYCACHE_DATA_FILE_PATH` env var to a temp file per test. Main process respects this override and it takes precedence over `settings.dataFilePath`.
 - **Coverage:** 100% unit coverage enforced via thresholds in `vitest.config.ts` (scoped to `src/main`).
-- **Release pipeline:** `.github/workflows/release.yml` builds unsigned artifacts for mac/win/linux. Trigger: push a `v*` tag (`npm version <level>` + `git push --tags`) or run workflow manually. Each runner runs `npm run dist` with `CSC_IDENTITY_AUTO_DISCOVERY=false` and uploads its artifacts; a final `release` job downloads all and publishes a GitHub Release with auto-generated notes (public immediately, no draft step). Node pinned via `.nvmrc` — `setup-node` reads it in CI, and nvm/fnm/asdf read it locally. `package.json` version is the source of truth (stamped into artifact filenames by electron-builder); `npm version <level>` keeps it and the git tag in sync. Signing not configured.
+- **Release pipeline:** `.github/workflows/release.yml` builds unsigned artifacts for mac/win/linux. Trigger: push a `v*` tag (`npm version <level>` + `git push --tags`) or run workflow manually. Each runner runs `npm run dist` with `CSC_IDENTITY_AUTO_DISCOVERY=false` and uploads its artifacts; a final `release` job downloads all and publishes a GitHub Release with auto-generated notes (public immediately, no draft step). Node pinned via `.nvmrc` — `setup-node` reads it in CI, and nvm/fnm/asdf read it locally. `package.json` version is the source of truth (stamped into artifact filenames by electron-builder); `npm version <level>` keeps it and the git tag in sync. `scripts/version-bump.mjs` (exposed as `npm run version:preview` / `npm run version:auto`) classifies each commit since the last tag from its Conventional Commit prefix — `feat!`/`fix!`/`BREAKING CHANGE:` → major, `feat:` → minor, everything else → patch — and runs `npm version <level>` with the highest-severity match. Signing not configured.
 
 ## Commit Messages
 

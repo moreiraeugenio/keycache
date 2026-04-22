@@ -65,6 +65,8 @@ The window starts hidden — look for the Keycache icon in the menu bar / system
 | `npm run format` | Format with Prettier |
 | `npm run package` | Build + package unpacked app to `dist/` |
 | `npm run dist` | Build + create distributable installer to `dist/` |
+| `npm run version:preview` | Show the bump level picked from commits since the last tag (dry run) |
+| `npm run version:auto` | Bump `package.json` + tag based on commits since the last tag |
 
 ## Releases
 
@@ -72,32 +74,48 @@ Releases are built and published via GitHub Actions (`.github/workflows/release.
 
 ### Cutting a release
 
-1. Verify your local Node matches `.nvmrc` (run `nvm use` / `fnm use` if not):
+1. Sync `main` so the release reflects everything that's been merged:
+
+   ```bash
+   git switch main
+   git pull
+   ```
+
+2. Verify your local Node matches `.nvmrc` (run `nvm use` / `fnm use` if not):
 
    ```bash
    node --version
    ```
 
-2. Run local sanity checks:
+3. Run local sanity checks:
 
    ```bash
    npm ci
    npm run lint && npm run test && npm run build
    ```
 
-3. Bump the version and tag. Pick the level per [semver](https://semver.org):
+4. Bump the version and tag. The easiest way is to let the tooling pick the level from the [Conventional Commit](https://www.conventionalcommits.org) prefixes since the last tag:
+
+   ```bash
+   npm run version:preview    # inspect the chosen bump first
+   npm run version:auto       # bump + tag with it
+   ```
+
+   The script maps commits to [semver](https://semver.org) levels:
+
+   - **patch** — bugfix, no behavior change (`fix:`, `chore:`, `docs:`, `refactor:`, `test:`, `ci:`, `build:`, `perf:`, `style:`, `revert:`)
+   - **minor** — new feature, backwards-compatible (`feat:`)
+   - **major** — breaking change (any type with `!` like `feat!:` / `fix!:`, or a `BREAKING CHANGE:` footer)
+
+   The highest-severity match across all commits since the last tag wins. If you'd rather pick by hand:
 
    ```bash
    npm version <patch|minor|major> -m "chore: release v%s"
    ```
 
-   - **patch** — bugfix, no behavior change
-   - **minor** — new feature, backwards-compatible
-   - **major** — breaking change
+   Either way, `npm version` bumps `package.json`, creates a commit with that message, and creates an annotated `v<x.y.z>` tag on that commit.
 
-   `npm version` bumps `package.json`, creates a commit with that message, and creates an annotated `v<x.y.z>` tag on that commit.
-
-4. Push the commit and tag:
+5. Push the commit and tag:
 
    ```bash
    git push origin main
