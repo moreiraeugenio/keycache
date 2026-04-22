@@ -74,10 +74,11 @@ console.log(`ok: node ${actual}`)
 step('npm ci')
 run('npm ci')
 
-step('Lint + unit tests + build')
+step('Lint + unit tests + build + E2E')
 run('npm run lint')
 run('npm run test')
 run('npm run build')
+run('npm run test:e2e')
 
 step('Preview bump')
 const lastTag = getLastTag()
@@ -100,8 +101,7 @@ step(`Bump version (${bump})`)
 run(`npm version ${bump} -m "chore: release v%s"`)
 
 step('Push commit and tag')
-run('git push origin main')
-run('git push --tags')
+run('git push --follow-tags origin main')
 
 const newTag = capture('git describe --tags --abbrev=0')
 console.log(`\nReleased ${newTag}.`)
