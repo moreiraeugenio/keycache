@@ -35,6 +35,7 @@ interface KeycacheApi {
   browseExistingDataFilePath(): Promise<string | null>;
   onThemeChanged(cb: (theme: string) => void): void;
   onShortcutsChanged(cb: (shortcuts: AppSettings['shortcuts']) => void): void;
+  onDataFileChanged(cb: () => void): void;
   onSettingsOpen(cb: () => void): void;
 
   debugLog(scope: string, event: string, details?: Record<string, unknown>): void;

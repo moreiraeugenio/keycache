@@ -456,6 +456,10 @@ registerShortcuts({
 
 initSettingsListeners();
 
+window.api.onDataFileChanged(() => {
+  void refreshNotes();
+});
+
 (async () => {
   const settings = await window.api.getSettings();
   valuesHidden = settings.valuesHidden;

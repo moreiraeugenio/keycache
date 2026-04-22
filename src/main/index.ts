@@ -64,8 +64,9 @@ function registerSettingsIpc(win: BrowserWindow): void {
       const oldDataFilePath = effectiveDataFilePath(settings);
       const newDataFilePath = incoming.dataFilePath || getDataFilePath();
       const { dataFileMode, ...persisted } = incoming;
+      const dataFilePathChanged = newDataFilePath !== oldDataFilePath;
 
-      if (newDataFilePath !== oldDataFilePath) {
+      if (dataFilePathChanged) {
         if (dataFileMode === 'adopt') {
           store.current.close();
           store.current = createNotesStore(newDataFilePath);
@@ -104,6 +105,9 @@ function registerSettingsIpc(win: BrowserWindow): void {
       }
       if (shortcutsChanged) {
         win.webContents.send('settings:shortcuts-changed', settings.shortcuts);
+      }
+      if (dataFilePathChanged) {
+        win.webContents.send('settings:data-file-changed');
       }
 
       return { ok: true };

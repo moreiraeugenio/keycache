@@ -667,6 +667,57 @@ describe('main process (index.ts)', () => {
         expect.objectContaining({ toggleVisibility: 'CmdOrCtrl+Shift+V' }),
       );
     });
+
+    it('emits settings:data-file-changed when path changes (default mode)', async () => {
+      await importMain();
+      whenReadyCb!();
+      mocks.moveDataFile.mockReturnValueOnce({ ok: true });
+      mockWebContents.send.mockClear();
+
+      await ipcHandlers['settings:save'](
+        {},
+        basePayload({ dataFilePath: '/tmp/new.json' }),
+      );
+
+      expect(mockWebContents.send).toHaveBeenCalledWith('settings:data-file-changed');
+    });
+
+    it('emits settings:data-file-changed when path changes (adopt mode)', async () => {
+      await importMain();
+      whenReadyCb!();
+      mockWebContents.send.mockClear();
+
+      await ipcHandlers['settings:save'](
+        {},
+        basePayload({ dataFilePath: '/tmp/existing.json', dataFileMode: 'adopt' }),
+      );
+
+      expect(mockWebContents.send).toHaveBeenCalledWith('settings:data-file-changed');
+    });
+
+    it('does not emit settings:data-file-changed when moveDataFile fails', async () => {
+      await importMain();
+      whenReadyCb!();
+      mocks.moveDataFile.mockReturnValueOnce({ ok: false, error: 'boom' });
+      mockWebContents.send.mockClear();
+
+      await ipcHandlers['settings:save'](
+        {},
+        basePayload({ dataFilePath: '/tmp/new.json' }),
+      );
+
+      expect(mockWebContents.send).not.toHaveBeenCalledWith('settings:data-file-changed');
+    });
+
+    it('does not emit settings:data-file-changed when path is unchanged', async () => {
+      await importMain();
+      whenReadyCb!();
+      mockWebContents.send.mockClear();
+
+      await ipcHandlers['settings:save']({}, basePayload());
+
+      expect(mockWebContents.send).not.toHaveBeenCalledWith('settings:data-file-changed');
+    });
   });
 
   // -- settings:browse-data-file-path --

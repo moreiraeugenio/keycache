@@ -76,7 +76,7 @@ tests/
 - **IPC channels:**
   - Main `ipcMain.handle`: `notes:getAll`, `notes:add`, `notes:update`, `notes:delete`, `settings:get`, `settings:save`, `settings:browse-data-file-path`.
   - Main `ipcMain.on`: `window:dialog-open`, `window:hide`.
-  - Main → renderer `webContents.send`: `settings:theme-changed`, `settings:shortcuts-changed`, `settings:open`.
+  - Main → renderer `webContents.send`: `settings:theme-changed`, `settings:shortcuts-changed`, `settings:data-file-changed`, `settings:open`.
 - **Keyboard UX:** Arrow ↑/↓ in the search input navigates the filtered list; Enter copies the selected value to clipboard and hides the window. Escape closes whichever dialog is open (confirm > form). Tab is swallowed outside dialogs (to keep focus on search). `newNote` / `focusSearch` bindings live-update on save via `updateKeyBindings`.
 - **Theming:** Renderer sets `data-theme="light" | "dark"` on `<html>`. In `system` mode it resolves from `matchMedia('(prefers-color-scheme: dark)')` and listens for changes. Theme applied on startup and whenever main broadcasts `settings:theme-changed`.
 - **Value masking:** Per-user "hide all values" toggle. Persisted in `settings.json` as `valuesHidden`. Masked values render as `••••••••` with a `.masked` class.

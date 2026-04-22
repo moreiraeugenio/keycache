@@ -19,6 +19,8 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.on('settings:theme-changed', (_e, theme) => cb(theme)),
   onShortcutsChanged: (cb: (shortcuts: unknown) => void) =>
     ipcRenderer.on('settings:shortcuts-changed', (_e, shortcuts) => cb(shortcuts)),
+  onDataFileChanged: (cb: () => void) =>
+    ipcRenderer.on('settings:data-file-changed', () => cb()),
   onSettingsOpen: (cb: () => void) => ipcRenderer.on('settings:open', () => cb()),
 
   debugLog: debugEnabled

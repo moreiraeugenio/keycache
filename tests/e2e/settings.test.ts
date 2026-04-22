@@ -1,4 +1,6 @@
-import { test, expect } from './fixture';
+import path from 'path';
+import fs from 'fs';
+import { test, expect, addNote } from './fixture';
 
 test('settings dialog opens when clicking the settings button', async ({ launched }) => {
   const { page } = launched;
@@ -80,4 +82,39 @@ test('saving duplicate shortcuts shows an error and keeps dialog open', async ({
     'Two or more shortcuts use the same key combination',
   );
   await expect(page.locator('#settings-dialog')).toBeVisible();
+});
+
+test('switching data file path refreshes the notes list without restart', async ({
+  launched,
+}) => {
+  const { page, tmpDir } = launched;
+
+  await addNote(page, 'first-key', 'first-value');
+
+  const otherFile = path.join(tmpDir, 'other.json');
+  fs.writeFileSync(
+    otherFile,
+    JSON.stringify({
+      nextId: 2,
+      notes: [
+        {
+          id: 1,
+          note_key: 'other-key',
+          note_value: 'other-value',
+          created_at: '2020-01-01 00:00:00',
+          updated_at: '2020-01-01 00:00:00',
+        },
+      ],
+    }),
+  );
+
+  const result = await page.evaluate(async (dataFilePath) => {
+    const current = await window.api.getSettings();
+    return window.api.saveSettings({ ...current, dataFilePath, dataFileMode: 'adopt' });
+  }, otherFile);
+
+  expect(result).toEqual({ ok: true });
+
+  await expect(page.locator('[aria-label="Edit other-key"]')).toBeVisible();
+  await expect(page.locator('[aria-label="Edit first-key"]')).toHaveCount(0);
 });
