@@ -37,7 +37,7 @@ export function createTrayWindow(): BrowserWindow {
   }
 
   win.on('blur', () => {
-    if (!dialogOpen && !win.webContents.isDevToolsOpened()) {
+    if (!win.webContents.isDevToolsOpened()) {
       hideWindow(win);
     }
   });

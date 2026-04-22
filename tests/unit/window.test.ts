@@ -168,16 +168,13 @@ describe('window', () => {
       expect(mockHide).not.toHaveBeenCalled();
     });
 
-    it('blur handler does NOT hide when dialog is open', () => {
-      // Simulate dialog open via the IPC handler
+    it('blur handler hides the window even when a dialog is open', () => {
       mocks.ipcHandlers['window:dialog-open']({}, true);
 
       createTrayWindow();
       blurHandler!();
-      expect(mockAppHide).not.toHaveBeenCalled();
-      expect(mockHide).not.toHaveBeenCalled();
+      expect(mockAppHide).toHaveBeenCalled();
 
-      // Reset dialog state
       mocks.ipcHandlers['window:dialog-open']({}, false);
     });
 
