@@ -668,8 +668,14 @@ body {
 
 .settings-path-row {
   display: flex;
+  flex-direction: column;
   gap: 8px;
-  align-items: center;
+}
+
+.settings-path-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
 }
 
 .settings-path-input {
