@@ -635,10 +635,18 @@ body {
   width: 90%;
 }
 
+.settings-dialog[open] {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 .settings-content {
   display: flex;
   flex-direction: column;
   gap: 0;
+  flex: 1;
+  min-height: 0;
 }
 
 .settings-body {
@@ -646,6 +654,26 @@ body {
   flex-direction: column;
   gap: 16px;
   margin-bottom: 20px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.settings-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.settings-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.settings-body::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 3px;
+}
+
+.settings-body::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
 }
 
 .settings-select {
