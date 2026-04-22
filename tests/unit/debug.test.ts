@@ -80,6 +80,19 @@ describe('debug', () => {
       debugLog('window', 'toggle', { visible: true });
       expect(logSpy).toHaveBeenCalledWith('[debug] window toggle visible=true');
     });
+
+    it('flattens nested objects using dot notation', () => {
+      process.env.ELECTRON_RENDERER_URL = 'http://localhost:5173';
+      debugLog('file', 'read', {
+        file: 'settings.json',
+        theme: 'dark',
+        shortcuts: { globalToggle: 'CmdOrCtrl+Shift+K', newNote: 'CmdOrCtrl+N' },
+      });
+      expect(logSpy).toHaveBeenCalledWith(
+        '[debug] file read file=settings.json theme=dark ' +
+          'shortcuts.globalToggle=CmdOrCtrl+Shift+K shortcuts.newNote=CmdOrCtrl+N',
+      );
+    });
   });
 
   describe('registerDebugIpc', () => {

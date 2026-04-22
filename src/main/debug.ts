@@ -9,6 +9,22 @@ function formatValue(value: unknown): string {
   return /\s/.test(str) ? `"${str}"` : str;
 }
 
+function appendDetails(
+  line: string,
+  details: Record<string, unknown>,
+  prefix: string,
+): string {
+  for (const [key, value] of Object.entries(details)) {
+    const fullKey = prefix ? `${prefix}.${key}` : key;
+    if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+      line = appendDetails(line, value as Record<string, unknown>, fullKey);
+    } else {
+      line += ` ${fullKey}=${formatValue(value)}`;
+    }
+  }
+  return line;
+}
+
 export function debugLog(
   scope: string,
   event: string,
@@ -16,11 +32,7 @@ export function debugLog(
 ): void {
   if (!isDebugEnabled()) return;
   let line = `[debug] ${scope} ${event}`;
-  if (details) {
-    for (const [key, value] of Object.entries(details)) {
-      line += ` ${key}=${formatValue(value)}`;
-    }
-  }
+  if (details) line = appendDetails(line, details, '');
   console.log(line);
 }
 

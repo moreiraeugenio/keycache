@@ -207,12 +207,13 @@ describe('moveDataFile', () => {
 });
 
 describe('debug logging', () => {
-  it('logs file read with theme on successful loadSettings', () => {
+  it('logs file read with full merged settings on successful loadSettings', () => {
     const filePath = path.join(tmpDir, 'settings.json');
     fs.writeFileSync(filePath, JSON.stringify({ theme: 'dark' }), 'utf-8');
     loadSettings(filePath);
     expect(debugMock.debugLog).toHaveBeenCalledWith('file', 'read', {
       file: 'settings.json',
+      ...getDefaultSettings(),
       theme: 'dark',
     });
   });

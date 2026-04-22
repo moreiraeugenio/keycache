@@ -43,7 +43,7 @@ export function loadSettings(filePath: string): AppSettings {
         ...(stored.shortcuts ?? {}),
       },
     };
-    debugLog('file', 'read', { file: 'settings.json', theme: merged.theme });
+    debugLog('file', 'read', { file: 'settings.json', ...merged });
     return merged;
   } catch {
     debugLog('file', 'read', { file: 'settings.json', fallback: true });
