@@ -57,31 +57,27 @@ describe('debug', () => {
       expect(logSpy).toHaveBeenCalledWith('[debug] button add-btn');
     });
 
-    it('appends key=value pairs from details', () => {
+    it('prints pretty JSON for details after the header', () => {
       process.env.ELECTRON_RENDERER_URL = 'http://localhost:5173';
       debugLog('file', 'read', { file: 'data.json', notes: 3 });
-      expect(logSpy).toHaveBeenCalledWith('[debug] file read file=data.json notes=3');
+      expect(logSpy).toHaveBeenCalledWith(
+        '[debug] file read\n{\n  "file": "data.json",\n  "notes": 3\n}',
+      );
     });
 
-    it('quotes values containing whitespace', () => {
-      process.env.ELECTRON_RENDERER_URL = 'http://localhost:5173';
-      debugLog('file', 'move', { from: '/a/b', to: '/c d/e' });
-      expect(logSpy).toHaveBeenCalledWith('[debug] file move from=/a/b to="/c d/e"');
-    });
-
-    it('prints valid line when details is undefined', () => {
+    it('prints only the header when details is undefined', () => {
       process.env.ELECTRON_RENDERER_URL = 'http://localhost:5173';
       debugLog('shortcut', 'newNote', undefined);
       expect(logSpy).toHaveBeenCalledWith('[debug] shortcut newNote');
     });
 
-    it('handles boolean values', () => {
+    it('prints only the header when details is an empty object', () => {
       process.env.ELECTRON_RENDERER_URL = 'http://localhost:5173';
-      debugLog('window', 'toggle', { visible: true });
-      expect(logSpy).toHaveBeenCalledWith('[debug] window toggle visible=true');
+      debugLog('window', 'toggle', {});
+      expect(logSpy).toHaveBeenCalledWith('[debug] window toggle');
     });
 
-    it('flattens nested objects using dot notation', () => {
+    it('preserves nested object structure in the JSON output', () => {
       process.env.ELECTRON_RENDERER_URL = 'http://localhost:5173';
       debugLog('file', 'read', {
         file: 'settings.json',
@@ -89,8 +85,16 @@ describe('debug', () => {
         shortcuts: { globalToggle: 'CmdOrCtrl+Shift+K', newNote: 'CmdOrCtrl+N' },
       });
       expect(logSpy).toHaveBeenCalledWith(
-        '[debug] file read file=settings.json theme=dark ' +
-          'shortcuts.globalToggle=CmdOrCtrl+Shift+K shortcuts.newNote=CmdOrCtrl+N',
+        '[debug] file read\n' +
+          JSON.stringify(
+            {
+              file: 'settings.json',
+              theme: 'dark',
+              shortcuts: { globalToggle: 'CmdOrCtrl+Shift+K', newNote: 'CmdOrCtrl+N' },
+            },
+            null,
+            2,
+          ),
       );
     });
   });
@@ -114,7 +118,9 @@ describe('debug', () => {
       registerDebugIpc();
       const handler = mocks.ipcMainOn.mock.calls[0][1];
       handler({}, 'scope', 'event', { foo: 'bar' });
-      expect(logSpy).toHaveBeenCalledWith('[debug] scope event foo=bar');
+      expect(logSpy).toHaveBeenCalledWith(
+        '[debug] scope event\n{\n  "foo": "bar"\n}',
+      );
       logSpy.mockRestore();
     });
   });
