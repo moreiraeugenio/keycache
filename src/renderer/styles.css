@@ -706,6 +706,7 @@ body {
   background: rgba(245, 158, 11, 0.08);
   border: 1px solid var(--warning);
   border-radius: var(--radius-sm);
+  overflow-wrap: anywhere;
 }
 
 .field-warning[hidden] {
