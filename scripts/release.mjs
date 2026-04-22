@@ -55,7 +55,7 @@ if (local !== remote) {
   if (base === local) {
     run('git pull --ff-only origin main')
   } else if (base === remote) {
-    abort('local main has unpushed commits; push or reset before releasing')
+    console.log('ok: local has unpushed commits (will push at end)')
   } else {
     abort('local main and origin/main have diverged')
   }
