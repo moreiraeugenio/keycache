@@ -10,6 +10,7 @@ interface AppSettings {
   theme: 'system' | 'light' | 'dark';
   dataFilePath: string;
   valuesHidden: boolean;
+  startAtLogin: boolean;
   shortcuts: {
     globalToggle: string;
     newNote: string;

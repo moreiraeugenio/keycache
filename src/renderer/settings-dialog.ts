@@ -9,6 +9,9 @@ const settingsOpenExistingBtn = document.getElementById(
   'settings-open-existing',
 ) as HTMLButtonElement;
 const themeSelect = document.getElementById('settings-theme') as HTMLSelectElement;
+const startAtLoginCheckbox = document.getElementById(
+  'settings-start-at-login',
+) as HTMLInputElement;
 const dataFilePathInput = document.getElementById(
   'settings-data-file-path',
 ) as HTMLInputElement;
@@ -79,6 +82,7 @@ function populateForm(settings: AppSettings): void {
   themeSelect.value = settings.theme;
   dataFilePathInput.value = settings.dataFilePath;
   currentValuesHidden = settings.valuesHidden;
+  startAtLoginCheckbox.checked = settings.startAtLogin;
   for (const [key, input] of Object.entries(shortcutInputs)) {
     const accel = settings.shortcuts[key as keyof AppSettings['shortcuts']];
     input.value = formatAccelerator(accel);
@@ -91,6 +95,7 @@ function readForm(): AppSettings & { dataFileMode: 'new' | 'adopt' } {
     theme: themeSelect.value as AppSettings['theme'],
     dataFilePath: dataFilePathInput.value,
     valuesHidden: currentValuesHidden,
+    startAtLogin: startAtLoginCheckbox.checked,
     shortcuts: {
       globalToggle: shortcutInputs.globalToggle.dataset.accel || defaults.globalToggle,
       newNote: shortcutInputs.newNote.dataset.accel || defaults.newNote,

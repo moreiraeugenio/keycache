@@ -47,6 +47,7 @@ const mocks = vi.hoisted(() => ({
   moveDataFile: vi.fn(),
   debugLog: vi.fn(),
   registerDebugIpc: vi.fn(),
+  setLoginItemSettings: vi.fn(),
 }));
 
 vi.mock('electron', () => ({
@@ -69,6 +70,7 @@ vi.mock('electron', () => ({
     getVersion: vi.fn().mockReturnValue('2.0.0'),
     setAboutPanelOptions: vi.fn(),
     showAboutPanel: vi.fn(),
+    setLoginItemSettings: mocks.setLoginItemSettings,
   },
   BrowserWindow: class {},
   ipcMain: {
@@ -122,6 +124,7 @@ vi.mock('../../src/main/settings', () => ({
     theme: 'system',
     dataFilePath: '',
     valuesHidden: false,
+    startAtLogin: false,
     shortcuts: {
       globalToggle: 'CmdOrCtrl+Shift+K',
       newNote: 'CmdOrCtrl+N',
@@ -136,6 +139,7 @@ vi.mock('../../src/main/settings', () => ({
     theme: 'system',
     dataFilePath: '',
     valuesHidden: false,
+    startAtLogin: false,
     shortcuts: {
       globalToggle: 'CmdOrCtrl+Shift+K',
       newNote: 'CmdOrCtrl+N',
@@ -419,6 +423,37 @@ describe('main process (index.ts)', () => {
       expect(mocks.debugLog).toHaveBeenCalledWith('global-shortcut', 'toggle');
     });
 
+    it('applies persisted startAtLogin via app.setLoginItemSettings at startup', async () => {
+      mocks.loadSettings.mockReturnValueOnce({
+        theme: 'system',
+        dataFilePath: '',
+        valuesHidden: false,
+        startAtLogin: true,
+        shortcuts: {
+          globalToggle: 'CmdOrCtrl+Shift+K',
+          newNote: 'CmdOrCtrl+N',
+          focusSearch: 'CmdOrCtrl+F',
+          openSettings: 'CmdOrCtrl+,',
+          toggleVisibility: 'CmdOrCtrl+Shift+H',
+        },
+      });
+      await importMain();
+      whenReadyCb!();
+      expect(mocks.setLoginItemSettings).toHaveBeenCalledWith({
+        openAtLogin: true,
+        openAsHidden: true,
+      });
+    });
+
+    it('applies default startAtLogin (false) at startup', async () => {
+      await importMain();
+      whenReadyCb!();
+      expect(mocks.setLoginItemSettings).toHaveBeenCalledWith({
+        openAtLogin: false,
+        openAsHidden: true,
+      });
+    });
+
     it('registers settings IPC handlers', async () => {
       await importMain();
       whenReadyCb!();
@@ -485,6 +520,7 @@ describe('main process (index.ts)', () => {
         theme: 'system' as const,
         dataFilePath: '',
         valuesHidden: false,
+        startAtLogin: false,
         shortcuts: { ...baseShortcuts },
         ...overrides,
       };
@@ -717,6 +753,49 @@ describe('main process (index.ts)', () => {
       await ipcHandlers['settings:save']({}, basePayload());
 
       expect(mockWebContents.send).not.toHaveBeenCalledWith('settings:data-file-changed');
+    });
+
+    it('calls app.setLoginItemSettings when startAtLogin is enabled', async () => {
+      await importMain();
+      whenReadyCb!();
+      mocks.setLoginItemSettings.mockClear();
+
+      await ipcHandlers['settings:save']({}, basePayload({ startAtLogin: true }));
+
+      expect(mocks.setLoginItemSettings).toHaveBeenCalledWith({
+        openAtLogin: true,
+        openAsHidden: true,
+      });
+    });
+
+    it('calls app.setLoginItemSettings when startAtLogin is disabled', async () => {
+      mocks.loadSettings.mockReturnValueOnce({
+        theme: 'system',
+        dataFilePath: '',
+        valuesHidden: false,
+        startAtLogin: true,
+        shortcuts: { ...baseShortcuts },
+      });
+      await importMain();
+      whenReadyCb!();
+      mocks.setLoginItemSettings.mockClear();
+
+      await ipcHandlers['settings:save']({}, basePayload({ startAtLogin: false }));
+
+      expect(mocks.setLoginItemSettings).toHaveBeenCalledWith({
+        openAtLogin: false,
+        openAsHidden: true,
+      });
+    });
+
+    it('does not call app.setLoginItemSettings when startAtLogin is unchanged', async () => {
+      await importMain();
+      whenReadyCb!();
+      mocks.setLoginItemSettings.mockClear();
+
+      await ipcHandlers['settings:save']({}, basePayload());
+
+      expect(mocks.setLoginItemSettings).not.toHaveBeenCalled();
     });
   });
 
