@@ -12,6 +12,10 @@ extraResources:
     to: trayIconTemplate.png
   - from: resources/trayIconTemplate@2x.png
     to: trayIconTemplate@2x.png
+  - from: resources/trayIconTemplate-devbuild.png
+    to: trayIconTemplate-devbuild.png
+  - from: resources/trayIconTemplate-devbuild@2x.png
+    to: trayIconTemplate-devbuild@2x.png
   - from: resources/tray-icon.png
     to: tray-icon.png
   - from: resources/tray-icon.ico

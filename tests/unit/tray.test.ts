@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   isPackaged: false,
+  appName: 'Keycache',
   setToolTip: vi.fn(),
   popUpContextMenu: vi.fn(),
   getBounds: vi.fn().mockReturnValue({ x: 100, y: 0, width: 24, height: 24 }),
@@ -46,6 +47,7 @@ vi.mock('electron', () => {
       get isPackaged() {
         return mocks.isPackaged;
       },
+      getName: () => mocks.appName,
     },
     nativeImage: {
       createFromPath: mocks.createFromPath,
@@ -62,6 +64,7 @@ describe('tray', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.isPackaged = false;
+    mocks.appName = 'Keycache';
     mocks.trayIconArg = null;
   });
 
@@ -84,6 +87,15 @@ describe('tray', () => {
       Object.defineProperty(process, 'platform', { value: 'darwin', configurable: true });
       const p = getTrayIconPath();
       expect(p).toBe('/packaged/resources/trayIconTemplate.png');
+    });
+
+    it('returns devbuild template on macOS when packaged as Keycache Dev', () => {
+      mocks.isPackaged = true;
+      mocks.appName = 'Keycache Dev';
+      (process as { resourcesPath?: string }).resourcesPath = '/packaged/resources';
+      Object.defineProperty(process, 'platform', { value: 'darwin', configurable: true });
+      const p = getTrayIconPath();
+      expect(p).toBe('/packaged/resources/trayIconTemplate-devbuild.png');
     });
 
     it('returns .ico on Windows in dev', () => {

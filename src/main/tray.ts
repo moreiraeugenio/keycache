@@ -3,13 +3,18 @@ import path from 'path';
 import { debugLog } from './debug';
 
 export function getTrayIconPath(): string {
-  const resourceBase = app.isPackaged
+  const isPackaged = app.isPackaged;
+  const resourceBase = isPackaged
     ? process.resourcesPath
     : path.join(__dirname, '../../resources');
 
   if (process.platform === 'darwin') {
-    const icon = app.isPackaged ? 'trayIconTemplate.png' : 'trayIconTemplate-dev.png';
-    return path.join(resourceBase, icon);
+    const suffix = !isPackaged
+      ? '-dev'
+      : app.getName() === 'Keycache Dev'
+        ? '-devbuild'
+        : '';
+    return path.join(resourceBase, `trayIconTemplate${suffix}.png`);
   }
   if (process.platform === 'win32') {
     return path.join(resourceBase, 'tray-icon.ico');
