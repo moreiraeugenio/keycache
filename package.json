@@ -20,6 +20,7 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "electron-vite build && npx playwright test --config tests/e2e/playwright.config.ts",
     "package": "electron-vite build && electron-builder --dir",
+    "package:dev": "electron-vite build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --dir -c.productName='Keycache Dev' -c.extraMetadata.productName='Keycache Dev' -c.appId=com.keycache.app.dev",
     "dist": "electron-vite build && electron-builder --publish never",
     "version:preview": "node scripts/version-bump.mjs --dry-run",
     "version:auto": "node scripts/version-bump.mjs",
