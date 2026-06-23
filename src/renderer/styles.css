@@ -5,6 +5,8 @@
 
 /* ---- Dark theme (default) ---- */
 :root {
+  color-scheme: dark;
+
   --bg-deep: #0f1117;
   --bg-base: #151821;
   --bg-elevated: #1c1f2e;
@@ -51,8 +53,14 @@
   --backdrop: rgba(0, 0, 0, 0.6);
 }
 
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
+
 /* ---- Light theme ---- */
-[data-theme='light'] {
+:root[data-theme='light'] {
+  color-scheme: light;
+
   --bg-deep: #f5f5f7;
   --bg-base: #eeeef0;
   --bg-elevated: #ffffff;
@@ -746,6 +754,11 @@ body {
 
 .settings-select:focus {
   border-color: var(--border-focus);
+}
+
+.settings-select option {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
 }
 
 .settings-path-row {
