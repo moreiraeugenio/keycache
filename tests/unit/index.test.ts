@@ -37,6 +37,7 @@ const mocks = vi.hoisted(() => ({
   toggleWindow: vi.fn(),
   hideWindow: vi.fn(),
   showWindow: vi.fn(),
+  getAppIconPath: vi.fn().mockReturnValue('/mock/icon.png'),
   createTray: vi.fn(),
   registerShortcuts: vi.fn(),
   unregisterShortcuts: vi.fn(),
@@ -103,6 +104,7 @@ vi.mock('../../src/main/window', () => ({
   toggleWindow: mocks.toggleWindow,
   hideWindow: mocks.hideWindow,
   showWindow: mocks.showWindow,
+  getAppIconPath: mocks.getAppIconPath,
 }));
 
 vi.mock('../../src/main/tray', () => ({
@@ -355,7 +357,11 @@ describe('main process (index.ts)', () => {
       onAbout();
       expect(elDialog.showMessageBox).toHaveBeenCalledWith(
         mockWin,
-        expect.objectContaining({ type: 'info', title: 'About Keycache' }),
+        expect.objectContaining({
+          type: 'info',
+          title: 'About Keycache',
+          icon: '/mock/icon.png',
+        }),
       );
     });
 

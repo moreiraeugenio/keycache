@@ -12,6 +12,8 @@ const mockLoadFile = vi.fn();
 const appMocks = vi.hoisted(() => ({
   hide: vi.fn(),
   show: vi.fn(),
+  getAppPath: vi.fn(() => '/fake/app/path'),
+  isPackaged: false,
 }));
 const mockAppHide = appMocks.hide;
 const mockAppShow = appMocks.show;
@@ -78,6 +80,7 @@ vi.mock('electron', () => ({
 import { screen } from 'electron';
 import {
   createTrayWindow,
+  getAppIconPath,
   getWindowPosition,
   showWindow,
   hideWindow,
@@ -88,17 +91,29 @@ describe('window', () => {
   const savedEnv = { ...process.env };
   const savedPlatform = process.platform;
 
+  const savedResourcesPath = process.resourcesPath;
+
   beforeEach(() => {
     vi.clearAllMocks();
     blurHandler = null;
     beforeInputHandler = null;
     delete process.env.ELECTRON_RENDERER_URL;
     Object.defineProperty(process, 'platform', { value: 'darwin', configurable: true });
+    appMocks.isPackaged = false;
+    appMocks.getAppPath.mockReturnValue('/fake/app/path');
+    Object.defineProperty(process, 'resourcesPath', {
+      value: '/fake/resources/path',
+      configurable: true,
+    });
   });
 
   afterEach(() => {
     process.env = { ...savedEnv };
     Object.defineProperty(process, 'platform', { value: savedPlatform, configurable: true });
+    Object.defineProperty(process, 'resourcesPath', {
+      value: savedResourcesPath,
+      configurable: true,
+    });
   });
 
   describe('dialog-open IPC', () => {
@@ -125,6 +140,20 @@ describe('window', () => {
       const opts = mocks.bwConstructorArgs as { webPreferences: Record<string, unknown> };
       expect(opts.webPreferences.contextIsolation).toBe(true);
       expect(opts.webPreferences.nodeIntegration).toBe(false);
+    });
+
+    it('passes dev icon path when not packaged', () => {
+      appMocks.isPackaged = false;
+      createTrayWindow();
+      const opts = mocks.bwConstructorArgs as { icon: string };
+      expect(opts.icon).toBe('/fake/app/path/build/icon.png');
+    });
+
+    it('passes packaged icon path when packaged', () => {
+      appMocks.isPackaged = true;
+      createTrayWindow();
+      const opts = mocks.bwConstructorArgs as { icon: string };
+      expect(opts.icon).toBe('/fake/resources/path/icon.png');
     });
 
     it('loads dev URL when ELECTRON_RENDERER_URL is set', () => {
@@ -216,6 +245,18 @@ describe('window', () => {
       createTrayWindow();
       mocks.ipcHandlers['window:hide']({});
       expect(mockAppHide).toHaveBeenCalled();
+    });
+  });
+
+  describe('getAppIconPath', () => {
+    it('returns dev path when not packaged', () => {
+      appMocks.isPackaged = false;
+      expect(getAppIconPath()).toBe('/fake/app/path/build/icon.png');
+    });
+
+    it('returns resourcesPath when packaged', () => {
+      appMocks.isPackaged = true;
+      expect(getAppIconPath()).toBe('/fake/resources/path/icon.png');
     });
   });
 

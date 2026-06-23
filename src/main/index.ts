@@ -3,7 +3,7 @@ import path from 'path';
 import { createNotesStore } from './store';
 import { registerIpcHandlers, type NotesStoreHolder } from './ipc';
 import { createTray } from './tray';
-import { createTrayWindow, toggleWindow, hideWindow, showWindow } from './window';
+import { createTrayWindow, toggleWindow, hideWindow, showWindow, getAppIconPath } from './window';
 import { registerShortcuts, unregisterShortcuts } from './shortcuts';
 import {
   loadSettings,
@@ -174,6 +174,7 @@ app.whenReady().then(() => {
             title: 'About Keycache',
             message: `Keycache Version ${app.getVersion()}`,
             detail: '\u00A9 2026 Eugênio Moreira',
+            icon: getAppIconPath(),
             buttons: ['OK', 'Check on GitHub'],
             defaultId: 0,
             cancelId: 0,

@@ -20,7 +20,10 @@ extraResources:
     to: tray-icon.png
   - from: resources/tray-icon.ico
     to: tray-icon.ico
+  - from: build/icon.png
+    to: icon.png
 mac:
+  icon: build/icon.icns
   target:
     - dmg
     - zip
@@ -29,9 +32,11 @@ mac:
     - from: build/Credits.rtf
       to: Credits.rtf
 win:
+  icon: build/icon.ico
   target:
     - nsis
 linux:
+  icon: build/icon.png
   target:
     - AppImage
 npmRebuild: true
