@@ -551,6 +551,60 @@ body {
   color: var(--text-muted);
 }
 
+.field-toggle label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  text-transform: none;
+  letter-spacing: normal;
+  cursor: pointer;
+}
+
+.field-toggle input[type='checkbox'] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  padding: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-grid;
+  place-content: center;
+  transition:
+    border-color var(--transition-fast),
+    background var(--transition-normal),
+    box-shadow var(--transition-fast);
+}
+
+.field-toggle input[type='checkbox']::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--accent);
+  transform: scale(0);
+  transition: transform var(--transition-fast);
+}
+
+.field-toggle input[type='checkbox']:checked::before {
+  transform: scale(1);
+}
+
+.field-toggle input[type='checkbox']:checked {
+  border-color: var(--border-focus);
+}
+
+.field-toggle input[type='checkbox']:focus-visible {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
 .form-error {
   display: flex;
   align-items: center;

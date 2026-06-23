@@ -6,6 +6,7 @@ export interface AppSettings {
   theme: 'system' | 'light' | 'dark';
   dataFilePath: string;
   valuesHidden: boolean;
+  startAtLogin: boolean;
   shortcuts: {
     globalToggle: string;
     newNote: string;
@@ -20,6 +21,7 @@ export function getDefaultSettings(): AppSettings {
     theme: 'system',
     dataFilePath: '',
     valuesHidden: false,
+    startAtLogin: false,
     shortcuts: {
       globalToggle: 'CmdOrCtrl+Shift+K',
       newNote: 'CmdOrCtrl+N',

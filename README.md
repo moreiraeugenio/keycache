@@ -64,6 +64,7 @@ The window starts hidden — look for the Keycache icon in the menu bar / system
 | `npm run lint` | Lint with ESLint |
 | `npm run format` | Format with Prettier |
 | `npm run package` | Build + package unpacked app to `dist/` |
+| `npm run package:dev` | Like `package`, but as "Keycache Dev" with appId `com.keycache.dev` (side-by-side with a prod install) |
 | `npm run dist` | Build + create distributable installer to `dist/` |
 | `npm run version:preview` | Show the bump level picked from commits since the last tag (dry run) |
 | `npm run version:auto` | Bump `package.json` + tag based on commits since the last tag |

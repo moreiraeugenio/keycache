@@ -92,6 +92,7 @@ function registerSettingsIpc(win: BrowserWindow): void {
         persisted.shortcuts.focusSearch !== settings.shortcuts.focusSearch ||
         persisted.shortcuts.openSettings !== settings.shortcuts.openSettings ||
         persisted.shortcuts.toggleVisibility !== settings.shortcuts.toggleVisibility;
+      const startAtLoginChanged = persisted.startAtLogin !== settings.startAtLogin;
 
       settings = {
         ...persisted,
@@ -108,6 +109,12 @@ function registerSettingsIpc(win: BrowserWindow): void {
       }
       if (dataFilePathChanged) {
         win.webContents.send('settings:data-file-changed');
+      }
+      if (startAtLoginChanged) {
+        app.setLoginItemSettings({
+          openAtLogin: settings.startAtLogin,
+          openAsHidden: true,
+        });
       }
 
       return { ok: true };
@@ -184,6 +191,11 @@ app.whenReady().then(() => {
   registerShortcuts(settings.shortcuts.globalToggle, () => {
     debugLog('global-shortcut', 'toggle');
     toggleWindow(win, tray.getBounds());
+  });
+
+  app.setLoginItemSettings({
+    openAtLogin: settings.startAtLogin,
+    openAsHidden: true,
   });
 
   registerSettingsIpc(win);

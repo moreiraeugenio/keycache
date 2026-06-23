@@ -33,6 +33,7 @@ describe('getDefaultSettings', () => {
     expect(defaults.theme).toBe('system');
     expect(defaults.dataFilePath).toBe('');
     expect(defaults.valuesHidden).toBe(false);
+    expect(defaults.startAtLogin).toBe(false);
     expect(defaults.shortcuts.globalToggle).toBe('CmdOrCtrl+Shift+K');
     expect(defaults.shortcuts.newNote).toBe('CmdOrCtrl+N');
     expect(defaults.shortcuts.focusSearch).toBe('CmdOrCtrl+F');
@@ -71,6 +72,13 @@ describe('loadSettings', () => {
     expect(settings.valuesHidden).toBe(true);
   });
 
+  it('preserves stored startAtLogin when present', () => {
+    const filePath = path.join(tmpDir, 'settings.json');
+    fs.writeFileSync(filePath, JSON.stringify({ startAtLogin: true }), 'utf-8');
+    const settings = loadSettings(filePath);
+    expect(settings.startAtLogin).toBe(true);
+  });
+
   it('merges partial shortcuts with defaults', () => {
     const filePath = path.join(tmpDir, 'settings.json');
     fs.writeFileSync(
@@ -92,6 +100,7 @@ describe('loadSettings', () => {
       theme: 'light' as const,
       dataFilePath: '/custom/path.json',
       valuesHidden: true,
+      startAtLogin: true,
       shortcuts: {
         globalToggle: 'CmdOrCtrl+Shift+J',
         newNote: 'CmdOrCtrl+M',

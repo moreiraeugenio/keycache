@@ -39,6 +39,20 @@ test('changing theme to dark applies data-theme="dark"', async ({ launched }) =>
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 });
 
+test('toggling start-at-login persists across dialog reopen', async ({ launched }) => {
+  const { page } = launched;
+  await page.click('#settings-btn');
+  await expect(page.locator('#settings-start-at-login')).not.toBeChecked();
+  await page.check('#settings-start-at-login');
+  await page.click('#settings-save');
+
+  const persisted = await page.evaluate(() => window.api.getSettings());
+  expect(persisted.startAtLogin).toBe(true);
+
+  await page.click('#settings-btn');
+  await expect(page.locator('#settings-start-at-login')).toBeChecked();
+});
+
 test('shortcut recorder captures pressed key combinations', async ({ launched }) => {
   const { page } = launched;
   await page.click('#settings-btn');

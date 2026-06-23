@@ -15,6 +15,7 @@ npm run format             # Prettier on src/
 npm run test               # unit tests (Vitest)
 npm run test:e2e           # E2E tests (Playwright + Electron) — builds app, then runs
 npm run package            # build + package unpacked app to dist/
+npm run package:dev        # like package, but as "Keycache Dev" with appId com.keycache.dev (side-by-side with prod install)
 npm run dist               # build + create distributable installer to dist/
 npm run version:preview    # show bump level picked from commits since last tag (dry run)
 npm run version:auto       # bump package.json + tag based on commits since last tag
