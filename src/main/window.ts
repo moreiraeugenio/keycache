@@ -8,6 +8,12 @@ ipcMain.on('window:dialog-open', (_e, open: boolean) => {
   dialogOpen = open;
 });
 
+export function getAppIconPath(): string {
+  return app.isPackaged
+    ? path.join(process.resourcesPath, 'icon.png')
+    : path.join(app.getAppPath(), 'build/icon.png');
+}
+
 export function createTrayWindow(): BrowserWindow {
   const win = new BrowserWindow({
     width: 400,
@@ -22,6 +28,7 @@ export function createTrayWindow(): BrowserWindow {
     skipTaskbar: true,
     alwaysOnTop: true,
     backgroundColor: '#0f1117',
+    icon: getAppIconPath(),
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
       contextIsolation: true,
