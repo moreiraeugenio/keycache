@@ -38,10 +38,12 @@ const mocks = vi.hoisted(() => ({
   hideWindow: vi.fn(),
   showWindow: vi.fn(),
   getAppIconPath: vi.fn().mockReturnValue('/mock/icon.png'),
+  applyShowInTaskbar: vi.fn(),
   createTray: vi.fn(),
   registerShortcuts: vi.fn(),
   unregisterShortcuts: vi.fn(),
   dockHide: vi.fn(),
+  dockShow: vi.fn(),
   quit: vi.fn(),
   loadSettings: vi.fn(),
   saveSettings: vi.fn(),
@@ -67,7 +69,7 @@ vi.mock('electron', () => ({
       eventHandlers[event] = handler;
     }),
     quit: mocks.quit,
-    dock: { hide: mocks.dockHide },
+    dock: { hide: mocks.dockHide, show: mocks.dockShow },
     getVersion: vi.fn().mockReturnValue('2.0.0'),
     setAboutPanelOptions: vi.fn(),
     showAboutPanel: vi.fn(),
@@ -105,6 +107,7 @@ vi.mock('../../src/main/window', () => ({
   hideWindow: mocks.hideWindow,
   showWindow: mocks.showWindow,
   getAppIconPath: mocks.getAppIconPath,
+  applyShowInTaskbar: mocks.applyShowInTaskbar,
 }));
 
 vi.mock('../../src/main/tray', () => ({
@@ -127,6 +130,7 @@ vi.mock('../../src/main/settings', () => ({
     dataFilePath: '',
     valuesHidden: false,
     startAtLogin: false,
+    showInTaskbar: false,
     shortcuts: {
       globalToggle: 'CmdOrCtrl+Shift+K',
       newNote: 'CmdOrCtrl+N',
@@ -142,6 +146,7 @@ vi.mock('../../src/main/settings', () => ({
     dataFilePath: '',
     valuesHidden: false,
     startAtLogin: false,
+    showInTaskbar: false,
     shortcuts: {
       globalToggle: 'CmdOrCtrl+Shift+K',
       newNote: 'CmdOrCtrl+N',
@@ -280,10 +285,51 @@ describe('main process (index.ts)', () => {
       expect(mocks.dockHide).not.toHaveBeenCalled();
     });
 
-    it('creates tray window', async () => {
+    it('does not hide dock when showInTaskbar is true on macOS', async () => {
+      Object.defineProperty(process, 'platform', { value: 'darwin', configurable: true });
+      mocks.loadSettings.mockReturnValueOnce({
+        theme: 'system',
+        dataFilePath: '',
+        valuesHidden: false,
+        startAtLogin: false,
+        showInTaskbar: true,
+        shortcuts: {
+          globalToggle: 'CmdOrCtrl+Shift+K',
+          newNote: 'CmdOrCtrl+N',
+          focusSearch: 'CmdOrCtrl+F',
+          openSettings: 'CmdOrCtrl+,',
+          toggleVisibility: 'CmdOrCtrl+Shift+H',
+        },
+      });
       await importMain();
       whenReadyCb!();
-      expect(mocks.createTrayWindow).toHaveBeenCalled();
+      expect(mocks.dockHide).not.toHaveBeenCalled();
+    });
+
+    it('creates tray window with showInTaskbar from settings', async () => {
+      await importMain();
+      whenReadyCb!();
+      expect(mocks.createTrayWindow).toHaveBeenCalledWith(false);
+    });
+
+    it('creates tray window with showInTaskbar=true when persisted', async () => {
+      mocks.loadSettings.mockReturnValueOnce({
+        theme: 'system',
+        dataFilePath: '',
+        valuesHidden: false,
+        startAtLogin: false,
+        showInTaskbar: true,
+        shortcuts: {
+          globalToggle: 'CmdOrCtrl+Shift+K',
+          newNote: 'CmdOrCtrl+N',
+          focusSearch: 'CmdOrCtrl+F',
+          openSettings: 'CmdOrCtrl+,',
+          toggleVisibility: 'CmdOrCtrl+Shift+H',
+        },
+      });
+      await importMain();
+      whenReadyCb!();
+      expect(mocks.createTrayWindow).toHaveBeenCalledWith(true);
     });
 
     it('creates tray with toggle, settings, about, and quit callbacks', async () => {
@@ -527,6 +573,7 @@ describe('main process (index.ts)', () => {
         dataFilePath: '',
         valuesHidden: false,
         startAtLogin: false,
+        showInTaskbar: false,
         shortcuts: { ...baseShortcuts },
         ...overrides,
       };
@@ -802,6 +849,69 @@ describe('main process (index.ts)', () => {
       await ipcHandlers['settings:save']({}, basePayload());
 
       expect(mocks.setLoginItemSettings).not.toHaveBeenCalled();
+    });
+
+    it('applies showInTaskbar=true and shows dock on macOS when toggled on', async () => {
+      Object.defineProperty(process, 'platform', { value: 'darwin', configurable: true });
+      await importMain();
+      whenReadyCb!();
+      mocks.applyShowInTaskbar.mockClear();
+      mocks.dockShow.mockClear();
+      mocks.dockHide.mockClear();
+
+      await ipcHandlers['settings:save']({}, basePayload({ showInTaskbar: true }));
+
+      expect(mocks.applyShowInTaskbar).toHaveBeenCalledWith(mockWin, true);
+      expect(mocks.dockShow).toHaveBeenCalled();
+      expect(mocks.dockHide).not.toHaveBeenCalled();
+    });
+
+    it('applies showInTaskbar=false and hides dock on macOS when toggled off', async () => {
+      Object.defineProperty(process, 'platform', { value: 'darwin', configurable: true });
+      mocks.loadSettings.mockReturnValueOnce({
+        theme: 'system',
+        dataFilePath: '',
+        valuesHidden: false,
+        startAtLogin: false,
+        showInTaskbar: true,
+        shortcuts: { ...baseShortcuts },
+      });
+      await importMain();
+      whenReadyCb!();
+      mocks.applyShowInTaskbar.mockClear();
+      mocks.dockShow.mockClear();
+      mocks.dockHide.mockClear();
+
+      await ipcHandlers['settings:save']({}, basePayload({ showInTaskbar: false }));
+
+      expect(mocks.applyShowInTaskbar).toHaveBeenCalledWith(mockWin, false);
+      expect(mocks.dockHide).toHaveBeenCalled();
+      expect(mocks.dockShow).not.toHaveBeenCalled();
+    });
+
+    it('applies showInTaskbar but does not touch dock on non-macOS', async () => {
+      Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
+      await importMain();
+      whenReadyCb!();
+      mocks.applyShowInTaskbar.mockClear();
+      mocks.dockShow.mockClear();
+      mocks.dockHide.mockClear();
+
+      await ipcHandlers['settings:save']({}, basePayload({ showInTaskbar: true }));
+
+      expect(mocks.applyShowInTaskbar).toHaveBeenCalledWith(mockWin, true);
+      expect(mocks.dockShow).not.toHaveBeenCalled();
+      expect(mocks.dockHide).not.toHaveBeenCalled();
+    });
+
+    it('does not apply showInTaskbar when unchanged', async () => {
+      await importMain();
+      whenReadyCb!();
+      mocks.applyShowInTaskbar.mockClear();
+
+      await ipcHandlers['settings:save']({}, basePayload());
+
+      expect(mocks.applyShowInTaskbar).not.toHaveBeenCalled();
     });
   });
 

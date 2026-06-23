@@ -11,6 +11,7 @@ interface AppSettings {
   dataFilePath: string;
   valuesHidden: boolean;
   startAtLogin: boolean;
+  showInTaskbar: boolean;
   shortcuts: {
     globalToggle: string;
     newNote: string;

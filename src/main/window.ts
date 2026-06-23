@@ -14,7 +14,7 @@ export function getAppIconPath(): string {
     : path.join(app.getAppPath(), 'build/icon.png');
 }
 
-export function createTrayWindow(): BrowserWindow {
+export function createTrayWindow(showInTaskbar: boolean): BrowserWindow {
   const win = new BrowserWindow({
     width: 400,
     height: 520,
@@ -25,7 +25,7 @@ export function createTrayWindow(): BrowserWindow {
     maximizable: false,
     fullscreenable: false,
     show: false,
-    skipTaskbar: true,
+    skipTaskbar: !showInTaskbar,
     alwaysOnTop: true,
     backgroundColor: '#0f1117',
     icon: getAppIconPath(),
@@ -125,4 +125,9 @@ export function toggleWindow(win: BrowserWindow, trayBounds: Electron.Rectangle)
   } else {
     showWindow(win, trayBounds);
   }
+}
+
+export function applyShowInTaskbar(win: BrowserWindow, show: boolean): void {
+  debugLog('window', 'show-in-taskbar', { show });
+  win.setSkipTaskbar(!show);
 }
