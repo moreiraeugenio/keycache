@@ -1009,5 +1009,18 @@ describe('main process (index.ts)', () => {
       const store = mocks.createNotesStore.mock.results[0].value;
       expect(store.close).toHaveBeenCalled();
     });
+
+    it('activate shows the window at the tray bounds', async () => {
+      await importMain();
+      whenReadyCb!();
+      mocks.showWindow.mockClear();
+      eventHandlers['activate']();
+      expect(mocks.showWindow).toHaveBeenCalledWith(mockWin, {
+        x: 100,
+        y: 0,
+        width: 24,
+        height: 24,
+      });
+    });
   });
 });

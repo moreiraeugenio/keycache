@@ -212,6 +212,11 @@ app.whenReady().then(() => {
     toggleWindow(win, tray.getBounds());
   });
 
+  app.on('activate', () => {
+    debugLog('app', 'activate');
+    showWindow(win, tray.getBounds());
+  });
+
   app.setLoginItemSettings({
     openAtLogin: settings.startAtLogin,
     openAsHidden: true,
