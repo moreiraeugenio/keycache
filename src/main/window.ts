@@ -110,11 +110,9 @@ export function showWindow(win: BrowserWindow, trayBounds: Electron.Rectangle): 
 
 export function hideWindow(win: BrowserWindow): void {
   debugLog('window', 'hide');
-  if (process.platform === 'darwin') {
-    app.hide();
-  } else {
-    win.hide();
-  }
+  // win.hide() works in any macOS activation policy; app.hide() becomes a
+  // no-op after a runtime app.dock.show()/hide() flip (see issue #7 follow-up).
+  win.hide();
 }
 
 export function toggleWindow(win: BrowserWindow, trayBounds: Electron.Rectangle): void {
