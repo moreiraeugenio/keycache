@@ -24,6 +24,18 @@ function capture(cmd) {
   return execSync(cmd, { encoding: 'utf8' }).trim()
 }
 
+function printWatchLink() {
+  try {
+    const remoteUrl = capture('git remote get-url origin')
+    const match = remoteUrl.match(/github\.com[:/](.+?)(?:\.git)?$/)
+    if (match) {
+      console.log(`Watch the build: https://github.com/${match[1]}/actions/workflows/release.yml`)
+    }
+  } catch {
+    // non-github remote; skip link
+  }
+}
+
 async function confirm(msg) {
   const rl = createInterface({ input, output })
   const answer = await rl.question(`${msg} [y/N] `)
@@ -63,6 +75,35 @@ if (local !== remote) {
   console.log('ok: up to date with origin/main')
 }
 
+// Resume support: if a prior run created the bump commit + tag locally
+// but the push didn't deliver the tag (e.g. pre-push E2E flaked and the
+// user recovered with a tag-less push), the tag is sitting unpushed at
+// HEAD. Detect that and finish the release — skipping the slow checks
+// that already passed on the prior run.
+step('Check for unpushed release tag at HEAD')
+let pendingTag = ''
+try {
+  pendingTag = capture('git describe --tags --exact-match HEAD')
+} catch {
+  // no tag at HEAD; nothing to resume
+}
+if (pendingTag) {
+  const tagOnRemote = capture(`git ls-remote --tags origin refs/tags/${pendingTag}`)
+  if (!tagOnRemote) {
+    if (dryRun) {
+      console.log(`(dry run) would resume push of ${pendingTag}`)
+      process.exit(0)
+    }
+    console.log(`Resuming push of ${pendingTag} (tag at HEAD, missing on origin).`)
+    step('Push commit and tag')
+    run(`git push --follow-tags origin main ${pendingTag}`)
+    console.log(`\nReleased ${pendingTag}.`)
+    printWatchLink()
+    process.exit(0)
+  }
+}
+console.log('ok: no pending tag to push')
+
 step('Check Node version matches .nvmrc')
 const required = readFileSync('.nvmrc', 'utf8').trim().replace(/^v/, '')
 const actual = process.versions.node
@@ -101,16 +142,12 @@ step(`Bump version (${bump})`)
 run(`npm version ${bump} -m "chore: release v%s"`)
 
 step('Push commit and tag')
-run('git push --follow-tags origin main')
-
 const newTag = capture('git describe --tags --abbrev=0')
+// Push main + the new tag explicitly. Relying on --follow-tags alone is
+// fragile: if main happens to already be at the bump commit on origin
+// (e.g. a partial recovery push delivered the commit but not the tag),
+// --follow-tags pushes no refs and silently skips the tag.
+run(`git push --follow-tags origin main ${newTag}`)
+
 console.log(`\nReleased ${newTag}.`)
-try {
-  const remoteUrl = capture('git remote get-url origin')
-  const match = remoteUrl.match(/github\.com[:/](.+?)(?:\.git)?$/)
-  if (match) {
-    console.log(`Watch the build: https://github.com/${match[1]}/actions/workflows/release.yml`)
-  }
-} catch {
-  // non-github remote; skip link
-}
+printWatchLink()
