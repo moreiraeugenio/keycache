@@ -183,11 +183,11 @@ describe('window', () => {
       expect(mockWinOn).toHaveBeenCalledWith('blur', expect.any(Function));
     });
 
-    it('blur handler hides window via win.hide on darwin', () => {
+    it('blur handler hides window via win.hide + app.hide on darwin', () => {
       createTrayWindow(false);
       blurHandler!();
       expect(mockHide).toHaveBeenCalled();
-      expect(mockAppHide).not.toHaveBeenCalled();
+      expect(mockAppHide).toHaveBeenCalled();
     });
 
     it('blur handler uses win.hide on non-darwin', () => {
@@ -221,11 +221,11 @@ describe('window', () => {
       expect(mockWebContentsOn).toHaveBeenCalledWith('before-input-event', expect.any(Function));
     });
 
-    it('Escape keydown hides the window via win.hide on darwin', () => {
+    it('Escape keydown hides the window via win.hide + app.hide on darwin', () => {
       createTrayWindow(false);
       beforeInputHandler!({ preventDefault: vi.fn() }, { type: 'keyDown', key: 'Escape' });
       expect(mockHide).toHaveBeenCalled();
-      expect(mockAppHide).not.toHaveBeenCalled();
+      expect(mockAppHide).toHaveBeenCalled();
     });
 
     it('Escape keydown does NOT hide when a dialog is open', () => {
@@ -251,11 +251,11 @@ describe('window', () => {
       expect(mockHide).not.toHaveBeenCalled();
     });
 
-    it('window:hide IPC hides the window via win.hide on darwin', () => {
+    it('window:hide IPC hides the window via win.hide + app.hide on darwin', () => {
       createTrayWindow(false);
       mocks.ipcHandlers['window:hide']({});
       expect(mockHide).toHaveBeenCalled();
-      expect(mockAppHide).not.toHaveBeenCalled();
+      expect(mockAppHide).toHaveBeenCalled();
     });
   });
 
@@ -346,11 +346,14 @@ describe('window', () => {
   });
 
   describe('hideWindow', () => {
-    it('uses win.hide on darwin (works in any activation policy)', () => {
+    it('calls win.hide then app.hide on darwin so the dock can re-fire activate', () => {
       const win = createTrayWindow(false);
       hideWindow(win);
       expect(mockHide).toHaveBeenCalled();
-      expect(mockAppHide).not.toHaveBeenCalled();
+      expect(mockAppHide).toHaveBeenCalled();
+      expect(mockHide.mock.invocationCallOrder[0]).toBeLessThan(
+        mockAppHide.mock.invocationCallOrder[0],
+      );
     });
 
     it('uses win.hide on non-darwin', () => {

@@ -110,9 +110,15 @@ export function showWindow(win: BrowserWindow, trayBounds: Electron.Rectangle): 
 
 export function hideWindow(win: BrowserWindow): void {
   debugLog('window', 'hide');
-  // win.hide() works in any macOS activation policy; app.hide() becomes a
-  // no-op after a runtime app.dock.show()/hide() flip (see issue #7 follow-up).
+  // win.hide() always hides the popup (works in any macOS activation policy —
+  // app.hide() becomes a no-op after a runtime app.dock.show()/hide() flip).
+  // On macOS we also call app.hide() so the app deactivates when it can:
+  // without that, clicking the dock icon (when "Show on taskbar/dock" is on)
+  // does not fire 'activate' and the popup can't be re-opened from the dock.
   win.hide();
+  if (process.platform === 'darwin') {
+    app.hide();
+  }
 }
 
 export function toggleWindow(win: BrowserWindow, trayBounds: Electron.Rectangle): void {

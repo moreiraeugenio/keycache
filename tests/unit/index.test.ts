@@ -1022,5 +1022,42 @@ describe('main process (index.ts)', () => {
         height: 24,
       });
     });
+
+    it('did-become-active is skipped within the launch window', async () => {
+      vi.useFakeTimers();
+      try {
+        vi.setSystemTime(1000);
+        await importMain();
+        whenReadyCb!();
+        vi.setSystemTime(1999);
+        mocks.showWindow.mockClear();
+        eventHandlers['did-become-active']();
+        expect(mocks.showWindow).not.toHaveBeenCalled();
+        expect(mocks.debugLog).toHaveBeenCalledWith('app', 'did-become-active-skipped-launch');
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('did-become-active shows the window after the launch window', async () => {
+      vi.useFakeTimers();
+      try {
+        vi.setSystemTime(1000);
+        await importMain();
+        whenReadyCb!();
+        vi.setSystemTime(4000);
+        mocks.showWindow.mockClear();
+        eventHandlers['did-become-active']();
+        expect(mocks.showWindow).toHaveBeenCalledWith(mockWin, {
+          x: 100,
+          y: 0,
+          width: 24,
+          height: 24,
+        });
+        expect(mocks.debugLog).toHaveBeenCalledWith('app', 'did-become-active');
+      } finally {
+        vi.useRealTimers();
+      }
+    });
   });
 });

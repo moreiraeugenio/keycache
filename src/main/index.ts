@@ -45,6 +45,8 @@ function effectiveDataFilePath(settings: AppSettings): string {
   return settings.dataFilePath || getDataFilePath();
 }
 
+const LAUNCH_ACTIVATION_SKIP_MS = 2000;
+
 const settingsPath = getSettingsPath();
 let settings = loadSettings(settingsPath);
 
@@ -214,6 +216,16 @@ app.whenReady().then(() => {
 
   app.on('activate', () => {
     debugLog('app', 'activate');
+    showWindow(win, tray.getBounds());
+  });
+
+  const launchedAt = Date.now();
+  app.on('did-become-active', () => {
+    if (Date.now() - launchedAt < LAUNCH_ACTIVATION_SKIP_MS) {
+      debugLog('app', 'did-become-active-skipped-launch');
+      return;
+    }
+    debugLog('app', 'did-become-active');
     showWindow(win, tray.getBounds());
   });
 
