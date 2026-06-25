@@ -4,6 +4,7 @@ const mockShow = vi.fn();
 const mockHide = vi.fn();
 const mockFocus = vi.fn();
 const mockSetPosition = vi.fn();
+const mockSetSkipTaskbar = vi.fn();
 const mockIsVisible = vi.fn().mockReturnValue(false);
 const mockGetBounds = vi.fn().mockReturnValue({ x: 0, y: 0, width: 400, height: 520 });
 const mockIsDevToolsOpened = vi.fn().mockReturnValue(false);
@@ -53,6 +54,7 @@ vi.mock('electron', () => ({
     hide = mockHide;
     focus = mockFocus;
     setPosition = mockSetPosition;
+    setSkipTaskbar = mockSetSkipTaskbar;
     isVisible = mockIsVisible;
     getBounds = mockGetBounds;
     loadURL = mockLoadURL;
@@ -80,6 +82,7 @@ vi.mock('electron', () => ({
 import { screen } from 'electron';
 import {
   createTrayWindow,
+  applyShowInTaskbar,
   getAppIconPath,
   getWindowPosition,
   showWindow,
@@ -124,7 +127,7 @@ describe('window', () => {
 
   describe('createTrayWindow', () => {
     it('creates frameless hidden popup with correct options', () => {
-      createTrayWindow();
+      createTrayWindow(false);
       const opts = mocks.bwConstructorArgs as Record<string, unknown>;
       expect(opts.frame).toBe(false);
       expect(opts.show).toBe(false);
@@ -135,8 +138,14 @@ describe('window', () => {
       expect(opts.height).toBe(520);
     });
 
+    it('passes skipTaskbar: false when showInTaskbar is true', () => {
+      createTrayWindow(true);
+      const opts = mocks.bwConstructorArgs as Record<string, unknown>;
+      expect(opts.skipTaskbar).toBe(false);
+    });
+
     it('enforces security settings', () => {
-      createTrayWindow();
+      createTrayWindow(false);
       const opts = mocks.bwConstructorArgs as { webPreferences: Record<string, unknown> };
       expect(opts.webPreferences.contextIsolation).toBe(true);
       expect(opts.webPreferences.nodeIntegration).toBe(false);
@@ -144,53 +153,53 @@ describe('window', () => {
 
     it('passes dev icon path when not packaged', () => {
       appMocks.isPackaged = false;
-      createTrayWindow();
+      createTrayWindow(false);
       const opts = mocks.bwConstructorArgs as { icon: string };
       expect(opts.icon).toBe('/fake/app/path/build/icon.png');
     });
 
     it('passes packaged icon path when packaged', () => {
       appMocks.isPackaged = true;
-      createTrayWindow();
+      createTrayWindow(false);
       const opts = mocks.bwConstructorArgs as { icon: string };
       expect(opts.icon).toBe('/fake/resources/path/icon.png');
     });
 
     it('loads dev URL when ELECTRON_RENDERER_URL is set', () => {
       process.env.ELECTRON_RENDERER_URL = 'http://localhost:5173';
-      createTrayWindow();
+      createTrayWindow(false);
       expect(mockLoadURL).toHaveBeenCalledWith('http://localhost:5173');
       expect(mockLoadFile).not.toHaveBeenCalled();
     });
 
     it('loads HTML file when ELECTRON_RENDERER_URL is not set', () => {
-      createTrayWindow();
+      createTrayWindow(false);
       expect(mockLoadFile).toHaveBeenCalled();
       expect(mockLoadURL).not.toHaveBeenCalled();
     });
 
     it('registers blur handler', () => {
-      createTrayWindow();
+      createTrayWindow(false);
       expect(mockWinOn).toHaveBeenCalledWith('blur', expect.any(Function));
     });
 
-    it('blur handler hides window via app.hide on darwin', () => {
-      createTrayWindow();
+    it('blur handler hides window via win.hide + app.hide on darwin', () => {
+      createTrayWindow(false);
       blurHandler!();
+      expect(mockHide).toHaveBeenCalled();
       expect(mockAppHide).toHaveBeenCalled();
-      expect(mockHide).not.toHaveBeenCalled();
     });
 
     it('blur handler uses win.hide on non-darwin', () => {
       Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
-      createTrayWindow();
+      createTrayWindow(false);
       blurHandler!();
       expect(mockHide).toHaveBeenCalled();
       expect(mockAppHide).not.toHaveBeenCalled();
     });
 
     it('blur handler does NOT hide when devtools are open', () => {
-      createTrayWindow();
+      createTrayWindow(false);
       mockIsDevToolsOpened.mockReturnValueOnce(true);
       blurHandler!();
       expect(mockAppHide).not.toHaveBeenCalled();
@@ -200,27 +209,28 @@ describe('window', () => {
     it('blur handler hides the window even when a dialog is open', () => {
       mocks.ipcHandlers['window:dialog-open']({}, true);
 
-      createTrayWindow();
+      createTrayWindow(false);
       blurHandler!();
-      expect(mockAppHide).toHaveBeenCalled();
+      expect(mockHide).toHaveBeenCalled();
 
       mocks.ipcHandlers['window:dialog-open']({}, false);
     });
 
     it('registers a before-input-event handler on webContents', () => {
-      createTrayWindow();
+      createTrayWindow(false);
       expect(mockWebContentsOn).toHaveBeenCalledWith('before-input-event', expect.any(Function));
     });
 
-    it('Escape keydown hides the window via app.hide on darwin', () => {
-      createTrayWindow();
+    it('Escape keydown hides the window via win.hide + app.hide on darwin', () => {
+      createTrayWindow(false);
       beforeInputHandler!({ preventDefault: vi.fn() }, { type: 'keyDown', key: 'Escape' });
+      expect(mockHide).toHaveBeenCalled();
       expect(mockAppHide).toHaveBeenCalled();
     });
 
     it('Escape keydown does NOT hide when a dialog is open', () => {
       mocks.ipcHandlers['window:dialog-open']({}, true);
-      createTrayWindow();
+      createTrayWindow(false);
       beforeInputHandler!({ preventDefault: vi.fn() }, { type: 'keyDown', key: 'Escape' });
       expect(mockAppHide).not.toHaveBeenCalled();
       expect(mockHide).not.toHaveBeenCalled();
@@ -228,22 +238,23 @@ describe('window', () => {
     });
 
     it('non-Escape keydown does NOT hide the window', () => {
-      createTrayWindow();
+      createTrayWindow(false);
       beforeInputHandler!({ preventDefault: vi.fn() }, { type: 'keyDown', key: 'Enter' });
       expect(mockAppHide).not.toHaveBeenCalled();
       expect(mockHide).not.toHaveBeenCalled();
     });
 
     it('Escape keyup does NOT hide the window', () => {
-      createTrayWindow();
+      createTrayWindow(false);
       beforeInputHandler!({ preventDefault: vi.fn() }, { type: 'keyUp', key: 'Escape' });
       expect(mockAppHide).not.toHaveBeenCalled();
       expect(mockHide).not.toHaveBeenCalled();
     });
 
-    it('window:hide IPC hides the window via app.hide on darwin', () => {
-      createTrayWindow();
+    it('window:hide IPC hides the window via win.hide + app.hide on darwin', () => {
+      createTrayWindow(false);
       mocks.ipcHandlers['window:hide']({});
+      expect(mockHide).toHaveBeenCalled();
       expect(mockAppHide).toHaveBeenCalled();
     });
   });
@@ -315,7 +326,7 @@ describe('window', () => {
 
   describe('showWindow', () => {
     it('sets position, shows, and focuses on darwin (with app.show)', () => {
-      const win = createTrayWindow();
+      const win = createTrayWindow(false);
       const bounds = { x: 700, y: 0, width: 24, height: 24 };
       showWindow(win, bounds);
       expect(mockSetPosition).toHaveBeenCalled();
@@ -326,7 +337,7 @@ describe('window', () => {
 
     it('does not call app.show on non-darwin', () => {
       Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
-      const win = createTrayWindow();
+      const win = createTrayWindow(false);
       const bounds = { x: 700, y: 0, width: 24, height: 24 };
       showWindow(win, bounds);
       expect(mockAppShow).not.toHaveBeenCalled();
@@ -335,16 +346,19 @@ describe('window', () => {
   });
 
   describe('hideWindow', () => {
-    it('uses app.hide on darwin', () => {
-      const win = createTrayWindow();
+    it('calls win.hide then app.hide on darwin so the dock can re-fire activate', () => {
+      const win = createTrayWindow(false);
       hideWindow(win);
+      expect(mockHide).toHaveBeenCalled();
       expect(mockAppHide).toHaveBeenCalled();
-      expect(mockHide).not.toHaveBeenCalled();
+      expect(mockHide.mock.invocationCallOrder[0]).toBeLessThan(
+        mockAppHide.mock.invocationCallOrder[0],
+      );
     });
 
     it('uses win.hide on non-darwin', () => {
       Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
-      const win = createTrayWindow();
+      const win = createTrayWindow(false);
       hideWindow(win);
       expect(mockHide).toHaveBeenCalled();
       expect(mockAppHide).not.toHaveBeenCalled();
@@ -353,7 +367,7 @@ describe('window', () => {
 
   describe('toggleWindow', () => {
     it('shows when hidden', () => {
-      const win = createTrayWindow();
+      const win = createTrayWindow(false);
       mockIsVisible.mockReturnValueOnce(false);
       const bounds = { x: 700, y: 0, width: 24, height: 24 };
       toggleWindow(win, bounds);
@@ -361,38 +375,58 @@ describe('window', () => {
     });
 
     it('hides when visible', () => {
-      const win = createTrayWindow();
+      const win = createTrayWindow(false);
       mockIsVisible.mockReturnValueOnce(true);
       const bounds = { x: 700, y: 0, width: 24, height: 24 };
       toggleWindow(win, bounds);
-      expect(mockAppHide).toHaveBeenCalled();
+      expect(mockHide).toHaveBeenCalled();
       expect(mockShow).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('applyShowInTaskbar', () => {
+    it('calls setSkipTaskbar(false) when show=true', () => {
+      const win = createTrayWindow(false);
+      applyShowInTaskbar(win, true);
+      expect(mockSetSkipTaskbar).toHaveBeenCalledWith(false);
+    });
+
+    it('calls setSkipTaskbar(true) when show=false', () => {
+      const win = createTrayWindow(false);
+      applyShowInTaskbar(win, false);
+      expect(mockSetSkipTaskbar).toHaveBeenCalledWith(true);
+    });
+
+    it('logs the toggle', () => {
+      const win = createTrayWindow(false);
+      applyShowInTaskbar(win, true);
+      expect(mocks.debugLog).toHaveBeenCalledWith('window', 'show-in-taskbar', { show: true });
     });
   });
 
   describe('debug logging', () => {
     it('logs window show', () => {
-      const win = createTrayWindow();
+      const win = createTrayWindow(false);
       const bounds = { x: 0, y: 0, width: 24, height: 24 };
       showWindow(win, bounds);
       expect(mocks.debugLog).toHaveBeenCalledWith('window', 'show');
     });
 
     it('logs window hide', () => {
-      const win = createTrayWindow();
+      const win = createTrayWindow(false);
       hideWindow(win);
       expect(mocks.debugLog).toHaveBeenCalledWith('window', 'hide');
     });
 
     it('logs window toggle with visible=true when window is visible', () => {
-      const win = createTrayWindow();
+      const win = createTrayWindow(false);
       mockIsVisible.mockReturnValueOnce(true);
       toggleWindow(win, { x: 0, y: 0, width: 24, height: 24 });
       expect(mocks.debugLog).toHaveBeenCalledWith('window', 'toggle', { visible: true });
     });
 
     it('logs window toggle with visible=false when window is hidden', () => {
-      const win = createTrayWindow();
+      const win = createTrayWindow(false);
       mockIsVisible.mockReturnValueOnce(false);
       toggleWindow(win, { x: 0, y: 0, width: 24, height: 24 });
       expect(mocks.debugLog).toHaveBeenCalledWith('window', 'toggle', { visible: false });

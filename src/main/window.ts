@@ -14,7 +14,7 @@ export function getAppIconPath(): string {
     : path.join(app.getAppPath(), 'build/icon.png');
 }
 
-export function createTrayWindow(): BrowserWindow {
+export function createTrayWindow(showInTaskbar: boolean): BrowserWindow {
   const win = new BrowserWindow({
     width: 400,
     height: 520,
@@ -25,7 +25,7 @@ export function createTrayWindow(): BrowserWindow {
     maximizable: false,
     fullscreenable: false,
     show: false,
-    skipTaskbar: true,
+    skipTaskbar: !showInTaskbar,
     alwaysOnTop: true,
     backgroundColor: '#0f1117',
     icon: getAppIconPath(),
@@ -110,10 +110,14 @@ export function showWindow(win: BrowserWindow, trayBounds: Electron.Rectangle): 
 
 export function hideWindow(win: BrowserWindow): void {
   debugLog('window', 'hide');
+  // win.hide() always hides the popup (works in any macOS activation policy —
+  // app.hide() becomes a no-op after a runtime app.dock.show()/hide() flip).
+  // On macOS we also call app.hide() so the app deactivates when it can:
+  // without that, clicking the dock icon (when "Show on taskbar/dock" is on)
+  // does not fire 'activate' and the popup can't be re-opened from the dock.
+  win.hide();
   if (process.platform === 'darwin') {
     app.hide();
-  } else {
-    win.hide();
   }
 }
 
@@ -125,4 +129,9 @@ export function toggleWindow(win: BrowserWindow, trayBounds: Electron.Rectangle)
   } else {
     showWindow(win, trayBounds);
   }
+}
+
+export function applyShowInTaskbar(win: BrowserWindow, show: boolean): void {
+  debugLog('window', 'show-in-taskbar', { show });
+  win.setSkipTaskbar(!show);
 }

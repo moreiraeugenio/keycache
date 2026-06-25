@@ -3,7 +3,14 @@ import path from 'path';
 import { createNotesStore } from './store';
 import { registerIpcHandlers, type NotesStoreHolder } from './ipc';
 import { createTray } from './tray';
-import { createTrayWindow, toggleWindow, hideWindow, showWindow, getAppIconPath } from './window';
+import {
+  createTrayWindow,
+  toggleWindow,
+  hideWindow,
+  showWindow,
+  getAppIconPath,
+  applyShowInTaskbar,
+} from './window';
 import { registerShortcuts, unregisterShortcuts } from './shortcuts';
 import {
   loadSettings,
@@ -37,6 +44,8 @@ function effectiveDataFilePath(settings: AppSettings): string {
   if (process.env.KEYCACHE_DATA_FILE_PATH) return process.env.KEYCACHE_DATA_FILE_PATH;
   return settings.dataFilePath || getDataFilePath();
 }
+
+const LAUNCH_ACTIVATION_SKIP_MS = 2000;
 
 const settingsPath = getSettingsPath();
 let settings = loadSettings(settingsPath);
@@ -93,6 +102,7 @@ function registerSettingsIpc(win: BrowserWindow): void {
         persisted.shortcuts.openSettings !== settings.shortcuts.openSettings ||
         persisted.shortcuts.toggleVisibility !== settings.shortcuts.toggleVisibility;
       const startAtLoginChanged = persisted.startAtLogin !== settings.startAtLogin;
+      const showInTaskbarChanged = persisted.showInTaskbar !== settings.showInTaskbar;
 
       settings = {
         ...persisted,
@@ -115,6 +125,16 @@ function registerSettingsIpc(win: BrowserWindow): void {
           openAtLogin: settings.startAtLogin,
           openAsHidden: true,
         });
+      }
+      if (showInTaskbarChanged) {
+        applyShowInTaskbar(win, settings.showInTaskbar);
+        if (process.platform === 'darwin') {
+          if (settings.showInTaskbar) {
+            app.dock.show();
+          } else {
+            app.dock.hide();
+          }
+        }
       }
 
       return { ok: true };
@@ -142,11 +162,11 @@ function registerSettingsIpc(win: BrowserWindow): void {
 }
 
 app.whenReady().then(() => {
-  if (process.platform === 'darwin') {
+  if (process.platform === 'darwin' && !settings.showInTaskbar) {
     app.dock.hide();
   }
 
-  const win = createTrayWindow();
+  const win = createTrayWindow(settings.showInTaskbar);
 
   app.setAboutPanelOptions({
     applicationName: 'Keycache',
@@ -192,6 +212,21 @@ app.whenReady().then(() => {
   registerShortcuts(settings.shortcuts.globalToggle, () => {
     debugLog('global-shortcut', 'toggle');
     toggleWindow(win, tray.getBounds());
+  });
+
+  app.on('activate', () => {
+    debugLog('app', 'activate');
+    showWindow(win, tray.getBounds());
+  });
+
+  const launchedAt = Date.now();
+  app.on('did-become-active', () => {
+    if (Date.now() - launchedAt < LAUNCH_ACTIVATION_SKIP_MS) {
+      debugLog('app', 'did-become-active-skipped-launch');
+      return;
+    }
+    debugLog('app', 'did-become-active');
+    showWindow(win, tray.getBounds());
   });
 
   app.setLoginItemSettings({

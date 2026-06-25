@@ -7,6 +7,7 @@ export interface AppSettings {
   dataFilePath: string;
   valuesHidden: boolean;
   startAtLogin: boolean;
+  showInTaskbar: boolean;
   shortcuts: {
     globalToggle: string;
     newNote: string;
@@ -22,6 +23,7 @@ export function getDefaultSettings(): AppSettings {
     dataFilePath: '',
     valuesHidden: false,
     startAtLogin: false,
+    showInTaskbar: false,
     shortcuts: {
       globalToggle: 'CmdOrCtrl+Shift+K',
       newNote: 'CmdOrCtrl+N',
