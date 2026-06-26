@@ -39,7 +39,25 @@
 - **ESLint + Prettier** — linting and formatting
 - **JSON file storage** — no native dependencies; notes persisted to a plain JSON file
 
-## Getting Started
+## Install
+
+### macOS — Homebrew
+
+```bash
+brew install --cask moreiraeugenio/keycache/keycache
+```
+
+The first run shows a Gatekeeper warning (the app is unsigned — see [Unsigned caveat](#unsigned-caveat)).
+
+### macOS / Windows / Linux — download
+
+Grab the latest installer for your platform from [Releases](https://github.com/moreiraeugenio/keycache/releases/latest):
+
+- macOS — `Keycache-<version>-arm64.dmg` (Apple Silicon) / `Keycache-<version>-x64.dmg` (Intel)
+- Windows — `Keycache.Setup.<version>.exe`
+- Linux — `Keycache-<version>.AppImage`
+
+## Getting Started (development)
 
 ```bash
 nvm use        # or `fnm use` — activates the Node version pinned in .nvmrc
@@ -129,9 +147,14 @@ Use the Actions tab's **Run workflow** button to trigger the matrix without publ
 
 - **macOS** users see a Gatekeeper warning on first launch; right-click the app → **Open** to bypass.
 - **Windows** users see a SmartScreen warning; click **More info** → **Run anyway**.
-- macOS default target is the runner's arch only (arm64 on `macos-latest`). For x64 or universal builds, extend `mac.target` / `arch` in `electron-builder.yml`.
 
 Code signing (Apple Developer cert, Windows EV cert) is not set up; enabling it requires the certs plus additional GitHub secrets.
+
+### Homebrew tap
+
+After each tagged release, `.github/workflows/release.yml` opens a PR against [`moreiraeugenio/homebrew-keycache`](https://github.com/moreiraeugenio/homebrew-keycache) bumping `Casks/keycache.rb` to the new version + sha256 (per-arch). Merging that PR ships the update to `brew upgrade` users.
+
+Requires the `HOMEBREW_TAP_TOKEN` repo secret — a PAT (classic) with `repo` scope on the tap repo, or a fine-grained token scoped to `moreiraeugenio/homebrew-keycache` with `Contents: write` + `Pull requests: write`.
 
 ## Contributing
 
