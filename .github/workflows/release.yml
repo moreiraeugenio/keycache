@@ -55,3 +55,52 @@ jobs:
         with:
           files: dist/*
           generate_release_notes: true
+
+  homebrew-bump:
+    needs: release
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - id: version
+        name: Resolve version
+        run: echo "value=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - id: shasums
+        name: Compute dmg sha256
+        env:
+          VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          BASE="https://github.com/${{ github.repository }}/releases/download/v$VERSION"
+          arm_sha=$(curl -fsSL "$BASE/Keycache-$VERSION-arm64.dmg" | sha256sum | awk '{print $1}')
+          x64_sha=$(curl -fsSL "$BASE/Keycache-$VERSION-x64.dmg"   | sha256sum | awk '{print $1}')
+          echo "arm_sha=$arm_sha" >> "$GITHUB_OUTPUT"
+          echo "x64_sha=$x64_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Check out tap repo
+        uses: actions/checkout@v7.0.0
+        with:
+          repository: moreiraeugenio/homebrew-keycache
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          path: tap
+
+      - name: Update cask
+        working-directory: tap
+        env:
+          VERSION: ${{ steps.version.outputs.value }}
+          ARM_SHA: ${{ steps.shasums.outputs.arm_sha }}
+          X64_SHA: ${{ steps.shasums.outputs.x64_sha }}
+        run: |
+          sed -i -E "s/version \"[^\"]+\"/version \"$VERSION\"/"  Casks/keycache.rb
+          sed -i -E "s|arm:   \"[a-f0-9]+\"|arm:   \"$ARM_SHA\"|" Casks/keycache.rb
+          sed -i -E "s|intel: \"[a-f0-9]+\"|intel: \"$X64_SHA\"|" Casks/keycache.rb
+
+      - name: Open PR on tap repo
+        uses: peter-evans/create-pull-request@v7.0.8
+        with:
+          path: tap
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          commit-message: "keycache ${{ steps.version.outputs.value }}"
+          branch: bump-keycache-${{ steps.version.outputs.value }}
+          title: "keycache ${{ steps.version.outputs.value }}"
+          body: |
+            Auto-bump from [moreiraeugenio/keycache@${{ github.ref_name }}](https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}).
