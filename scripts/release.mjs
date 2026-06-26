@@ -115,13 +115,17 @@ console.log(`ok: node ${actual}`)
 step('npm ci')
 run('npm ci')
 
-// Workaround: on macOS, npm-driven electron postinstall (v42) occasionally
-// fails to create the top-level `Electron Framework` symlink inside the
-// framework bundle, while extracting the 180 MB binary itself fine. The
-// missing symlink makes every Playwright `electron.launch()` fail with
-// `dyld: Library not loaded: @rpath/Electron Framework.framework/...`.
-// Re-running install.js produces a correct extract, but the cheaper fix
-// is to recreate the one symlink the extractor dropped.
+// Workaround: electron v42's npm package has no postinstall script, so the
+// 180 MB binary is fetched lazily the first time `require('electron')` runs.
+// When that lazy install happens under Playwright (during npm run test:e2e),
+// the NAPI extract-zip occasionally drops the top-level `Electron Framework`
+// symlink inside the framework bundle. Playwright's electron.launch() then
+// fails with `dyld: Library not loaded: @rpath/Electron Framework.framework`.
+// Force the install here, on a quiet system, then recreate the symlink if
+// the extractor dropped it. Standalone installs produce a correct extract
+// every time we've tested, but the repair is idempotent and cheap.
+step('Pre-fetch electron + verify framework')
+run('node -e "require(\'electron\')"')
 const fwDir =
   'node_modules/electron/dist/Electron.app/Contents/Frameworks/Electron Framework.framework'
 const fwLink = `${fwDir}/Electron Framework`
@@ -133,9 +137,12 @@ try {
   // missing — repair below
 }
 if (existsSync(fwDir) && !fwLinkPresent) {
-  step('Repair Electron framework symlink')
   symlinkSync('Versions/Current/Electron Framework', fwLink)
-  console.log(`created ${fwLink}`)
+  console.log(`repaired ${fwLink}`)
+} else if (fwLinkPresent) {
+  console.log('framework symlink ok')
+} else {
+  abort('electron extract missing — framework directory not created')
 }
 
 step('Lint + unit tests + build + E2E')
