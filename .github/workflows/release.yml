@@ -82,6 +82,10 @@ jobs:
           repository: moreiraeugenio/homebrew-keycache
           token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
           path: tap
+          # Don't leave `http.<host>.extraheader` in the tap clone's git
+          # config — peter-evans/create-pull-request adds its own Authorization
+          # header and the two collide as "Duplicate header: Authorization".
+          persist-credentials: false
 
       - name: Update cask
         working-directory: tap
