@@ -271,11 +271,14 @@ describe('main process (index.ts)', () => {
   // -- whenReady --
 
   describe('app.whenReady', () => {
-    it('hides dock on macOS', async () => {
+    it('hides dock on macOS at module load, before whenReady (issue #32)', async () => {
       Object.defineProperty(process, 'platform', { value: 'darwin', configurable: true });
       await importMain();
+      // hide runs at module top-level so it beats macOS activating the app as a
+      // foreground GUI process at login launch; whenReady is too late.
+      expect(mocks.dockHide).toHaveBeenCalledTimes(1);
       whenReadyCb!();
-      expect(mocks.dockHide).toHaveBeenCalled();
+      expect(mocks.dockHide).toHaveBeenCalledTimes(1);
     });
 
     it('does not hide dock on non-macOS', async () => {

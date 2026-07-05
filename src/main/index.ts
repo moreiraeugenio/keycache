@@ -50,6 +50,14 @@ const LAUNCH_ACTIVATION_SKIP_MS = 2000;
 const settingsPath = getSettingsPath();
 let settings = loadSettings(settingsPath);
 
+// Hide the dock icon as early as possible so it never appears when Keycache is
+// launched at login with showInTaskbar off. Deferring this to whenReady lets
+// macOS activate the app as a foreground GUI process first and leaves the dock
+// entry in place. See issue #32.
+if (process.platform === 'darwin' && !settings.showInTaskbar) {
+  app.dock?.hide();
+}
+
 const store: NotesStoreHolder = {
   current: createNotesStore(effectiveDataFilePath(settings)),
 };
@@ -162,10 +170,6 @@ function registerSettingsIpc(win: BrowserWindow): void {
 }
 
 app.whenReady().then(() => {
-  if (process.platform === 'darwin' && !settings.showInTaskbar) {
-    app.dock.hide();
-  }
-
   const win = createTrayWindow(settings.showInTaskbar);
 
   app.setAboutPanelOptions({
