@@ -26,7 +26,10 @@ export async function launchApp(opts: LaunchOptions = {}): Promise<LaunchedApp> 
   const settingsFilePath = opts.settingsFilePath ?? path.join(tmpDir, 'settings.json');
 
   const app = await electron.launch({
-    args: [projectRoot],
+    // Linux CI runs as a non-root user under xvfb, where Electron's setuid
+    // sandbox helper isn't configured and refuses to start. The sandbox isn't
+    // what these tests cover, so drop it there and leave macOS/Windows alone.
+    args: process.platform === 'linux' ? [projectRoot, '--no-sandbox'] : [projectRoot],
     env: {
       ...process.env,
       NODE_ENV: 'test',

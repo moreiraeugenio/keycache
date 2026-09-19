@@ -33,3 +33,37 @@ jobs:
       - run: npm run test:coverage
 
       - run: npm run build
+
+  # E2E lives here rather than in a pre-push hook: it is the only thing that
+  # drives the real app, and ubuntu-latest is a platform we ship a build for
+  # but never exercise locally (development is macOS).
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version-file: '.nvmrc'
+          cache: npm
+
+      - run: npm ci
+
+      # Electron needs the same shared libraries Chromium does, and the runner
+      # image doesn't carry all of them. Playwright knows the list; no browser
+      # download is needed since the tests launch Electron's own binary.
+      - run: npx playwright install-deps chromium
+
+      # The app is a tray popup driving a real window, so there is no headless
+      # mode to fall back on — give it a virtual display instead.
+      - run: xvfb-run --auto-servernum npm run test:e2e
+
+      # retries: 2 with trace: 'on-first-retry' means a failure that survives
+      # its retries leaves a trace worth downloading.
+      - uses: actions/upload-artifact@v7.0.1
+        if: failure()
+        with:
+          name: playwright-traces
+          path: test-results/
+          retention-days: 7
