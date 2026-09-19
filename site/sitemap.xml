@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  One page, so this is mostly a formality — but its absence is a small
+  negative signal, and robots.txt points at it.
+
+  No <lastmod>: it would have to be hand-edited on every deploy, and a date
+  that quietly goes stale is worse than no date at all.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://keycache.app/</loc>
+    <changefreq>monthly</changefreq>
+  </url>
+</urlset>

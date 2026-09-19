@@ -1,0 +1,94 @@
+name: Deploy site
+
+# Deploys site/ to keycache.app on Vercel. The Vercel Git integration is
+# deliberately not connected — this workflow is the only thing that deploys,
+# so the app repo keeps one CI story.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - 'assets/demo.gif'
+      - '.github/deploy/**'
+      - '.github/workflows/deploy-site.yml'
+  workflow_dispatch:
+
+# The attribution commit below is pushed back to main.
+permissions:
+  contents: write
+
+concurrency:
+  group: deploy-site
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: site
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ github.sha }}
+
+      # Vercel rejects deploys whose HEAD commit author isn't a team member.
+      # On this repo HEAD is often a GitHub-authored merge commit (PR merges)
+      # or a Dependabot commit, so stack an empty commit authored as the repo
+      # owner and push it. The paths filter above means this empty commit
+      # never retriggers the workflow; [skip ci] keeps it out of CI too.
+      # Skipped when HEAD is already authored by the owner.
+      - name: Stack [skip ci] commit as repo owner and push
+        working-directory: .
+        env:
+          GIT_USER_NAME: Eugênio Moreira
+          GIT_USER_EMAIL: me@eugeniomoreira.com
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          LAST_AUTHOR_EMAIL=$(git log -1 --format='%ae')
+          if [ "$LAST_AUTHOR_EMAIL" = "$GIT_USER_EMAIL" ]; then
+            echo "HEAD already authored by $GIT_USER_EMAIL — skipping attribution commit."
+            exit 0
+          fi
+          git config user.name "$GIT_USER_NAME"
+          git config user.email "$GIT_USER_EMAIL"
+          git commit --allow-empty -m "chore: trigger site deploy [skip ci]"
+          git push origin HEAD:"$BRANCH"
+
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version-file: '.nvmrc'
+          cache: npm
+          cache-dependency-path: .github/deploy/package-lock.json
+
+      # The Vercel CLI is pinned in .github/deploy/package.json rather than the
+      # app's package.json, so app contributors never install it and it stays
+      # out of the Vercel project root. Dependabot tracks it — see
+      # .github/dependabot.yml.
+      - name: Install pinned deploy CLI
+        working-directory: .github/deploy
+        run: npm ci
+
+      - name: Expose deploy CLI on PATH
+        run: echo "$GITHUB_WORKSPACE/.github/deploy/node_modules/.bin" >> "$GITHUB_PATH"
+
+      # demo.gif is copied from the repo's canonical assets/ rather than
+      # duplicated in git. site/assets/og.png and icon.png are committed.
+      - name: Stage shared assets
+        working-directory: .
+        run: npm run site:assets
+
+      - name: Pull Vercel project metadata
+        run: vercel pull --yes --environment=production --token=$VERCEL_TOKEN
+
+      - name: Build with Vercel
+        run: vercel build --prod --token=$VERCEL_TOKEN
+
+      - name: Deploy prebuilt
+        run: vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN

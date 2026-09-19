@@ -1,0 +1,27 @@
+# Everything here is public and meant to be found — by search engines and by
+# AI assistants alike. The AI crawlers are listed explicitly so that allowing
+# them reads as a decision rather than an oversight: blocking them would keep
+# Keycache out of AI answers without helping its search ranking.
+
+User-agent: *
+Allow: /
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+Sitemap: https://keycache.app/sitemap.xml

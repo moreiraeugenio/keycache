@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Keycache — key-value notes in your menu bar</title>
+    <meta
+      name="description"
+      content="A menu bar app for the strings you retype all day. Keyboard-first, values masked, stored in a plain JSON file on your machine. No cloud, no account."
+    />
+    <link rel="canonical" href="https://keycache.app/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://keycache.app/" />
+    <meta property="og:title" content="Keycache — key-value notes in your menu bar" />
+    <meta
+      property="og:description"
+      content="A menu bar app for the strings you retype all day. Keyboard-first, values masked, stored in a plain JSON file on your machine. No cloud, no account."
+    />
+    <meta property="og:image" content="https://keycache.app/assets/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="icon" type="image/png" href="/assets/icon.png" />
+    <link rel="apple-touch-icon" href="/assets/icon.png" />
+    <meta name="theme-color" content="#0f1117" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+
+    <!--
+      Structured data. These are data blocks, not executable scripts, so the
+      page's script-src CSP does not apply to them. Keep the FAQ entries in
+      sync with the visible copy below — a mismatch is a manual-action risk,
+      not a clever trick.
+    -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Keycache",
+        "description": "A menu bar app for the strings you retype all day. Keyboard-first, values masked, stored in a plain JSON file on your machine. No cloud, no account.",
+        "url": "https://keycache.app/",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "macOS, Windows, Linux",
+        "downloadUrl": "https://github.com/moreiraeugenio/keycache/releases/latest",
+        "softwareHelp": "https://github.com/moreiraeugenio/keycache",
+        "license": "https://www.gnu.org/licenses/gpl-3.0.html",
+        "isAccessibleForFree": true,
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "author": { "@type": "Person", "name": "Eug\u00eanio Moreira" }
+      }
+    </script>
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Where are my notes stored?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "In a plain JSON file on your own machine, at a location you pick in Settings. Nothing is uploaded, because Keycache has no network code \u2014 there is no server, no sync and no account. If you want your notes on two machines, point the data file at a folder you already sync."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is it a password manager?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No, and it shouldn't be used as one. Values are stored in plain text, and masking only hides them on screen \u2014 it isn't encryption. Keycache is for the strings you retype all day but wouldn't mind a coworker seeing: account numbers, ticket prefixes, a long build command. Real secrets belong in a password manager or your OS keychain."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How is it different from Raycast snippets or a clipboard manager?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "A clipboard manager remembers what you copied; Keycache stores what you decided to keep, under a name you chose. Compared to snippet features built into larger launchers, the difference is scope and ownership: one small app that does this and nothing else, with your data in a file you can read, move or delete without exporting anything."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What does it cost?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Nothing. Keycache is free and open source under GPL-3.0-or-later, with no paid tier, no telemetry and no accounts. This page has no trackers on it either."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Which platforms does it run on?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "macOS, Windows and Linux. On macOS it lives in the menu bar and installs through Homebrew; on Windows it sits in the notification area; on Linux it ships as an AppImage."
+            }
+          }
+        ]
+      }
+    </script>
+  </head>
+
+  <body>
+    <main>
+      <section class="hero">
+        <!-- Decorative: the wordmark right below it already says the name. -->
+        <img class="logo" src="/assets/icon.png" alt="" width="72" height="72" />
+        <h1>Keycache</h1>
+        <p class="tagline">Key-value notes in your menu bar.</p>
+        <p class="subtitle">
+          For the strings you retype all day — account numbers, API keys, that one npm command.
+          One shortcut to open, arrow keys to find, <kbd>Enter</kbd> to copy.
+        </p>
+
+        <figure class="demo">
+          <img
+            src="/assets/demo.gif"
+            alt="The Keycache popup opening from the menu bar, filtering notes by typing, and copying a value with Enter"
+            width="414"
+            height="564"
+            loading="eager"
+            decoding="async"
+          />
+        </figure>
+
+        <div class="cta">
+          <a class="btn btn-primary" id="primary-download" href="https://github.com/moreiraeugenio/keycache/releases/latest">
+            <span id="primary-download-label">Download</span>
+          </a>
+          <a class="btn btn-ghost" href="https://github.com/moreiraeugenio/keycache">View source</a>
+        </div>
+        <p class="cta-note" id="cta-note">
+          Free and open source. macOS, Windows and Linux.
+        </p>
+      </section>
+
+      <section class="pitch" aria-labelledby="local-heading">
+        <h2 id="local-heading">Your notes are a file. That's the whole idea.</h2>
+        <p>
+          Keycache writes to a plain JSON file that you choose the location of. You can read it,
+          back it up, put it in a synced folder, or delete it. There is no server to trust, no
+          account to make, and nothing leaves your machine — the app has no network code at all.
+        </p>
+        <p>
+          It is built on Electron's secure defaults (<code>contextIsolation</code> on,
+          <code>nodeIntegration</code> off — every read and write goes through IPC in the main
+          process),
+          and the source is GPL-3.0, so you can check all of that yourself.
+        </p>
+      </section>
+
+      <section class="features" aria-labelledby="features-heading">
+        <h2 id="features-heading">What you get</h2>
+        <ul class="feature-grid">
+          <li>
+            <h3>One global shortcut</h3>
+            <p>
+              <kbd>⌘</kbd><kbd>⇧</kbd><kbd>K</kbd> from anywhere, or rebind it. The popup opens at
+              the tray icon and hides the moment you click away.
+            </p>
+          </li>
+          <li>
+            <h3>Keyboard-first</h3>
+            <p>
+              Type to filter, <kbd>↑</kbd><kbd>↓</kbd> to move, <kbd>Enter</kbd> to copy the value
+              and dismiss. Your hands never leave the keyboard.
+            </p>
+          </li>
+          <li>
+            <h3>Masked values</h3>
+            <p>
+              Flip one toggle and every value renders as dots, so you can open the app in a
+              screen share without thinking about it.
+            </p>
+          </li>
+          <li>
+            <h3>Stays out of the way</h3>
+            <p>
+              No dock icon, no taskbar entry, no window to manage. It is a tray icon and a popup,
+              and that is all it wants to be.
+            </p>
+          </li>
+          <li>
+            <h3>Light, dark, or system</h3>
+            <p>
+              Follows the OS by default and switches live when the OS does. The tray icon is a
+              template image on macOS, so it adapts too.
+            </p>
+          </li>
+          <li>
+            <h3>Yours to move</h3>
+            <p>
+              Point the data file anywhere from Settings. Keycache moves the existing notes across
+              for you, even between volumes.
+            </p>
+          </li>
+        </ul>
+      </section>
+
+      <section class="install" aria-labelledby="install-heading">
+        <h2 id="install-heading">Install</h2>
+
+        <div class="install-brew">
+          <h3>macOS — Homebrew</h3>
+          <div class="code-copy">
+            <code id="brew-command">brew install --cask moreiraeugenio/keycache/keycache</code>
+            <button type="button" id="copy-brew" data-copy-target="brew-command">Copy</button>
+          </div>
+        </div>
+
+        <div class="install-direct">
+          <h3>Direct download</h3>
+          <ul class="download-list" id="download-list">
+            <li data-platform="mac">
+              <span class="platform">macOS</span>
+              <span class="links">
+                <a data-asset="mac-arm64" href="https://github.com/moreiraeugenio/keycache/releases/latest">Apple Silicon</a>
+                <a data-asset="mac-x64" href="https://github.com/moreiraeugenio/keycache/releases/latest">Intel</a>
+              </span>
+            </li>
+            <li data-platform="windows">
+              <span class="platform">Windows</span>
+              <span class="links">
+                <a data-asset="win" href="https://github.com/moreiraeugenio/keycache/releases/latest">Installer (.exe)</a>
+              </span>
+            </li>
+            <li data-platform="linux">
+              <span class="platform">Linux</span>
+              <span class="links">
+                <a data-asset="linux" href="https://github.com/moreiraeugenio/keycache/releases/latest">AppImage</a>
+              </span>
+            </li>
+          </ul>
+          <p class="version-note" id="version-note">
+            <a href="https://github.com/moreiraeugenio/keycache/releases/latest">All releases on GitHub</a>
+          </p>
+        </div>
+
+        <details class="unsigned">
+          <summary>First launch shows a warning. Here's why.</summary>
+          <p>
+            The builds are not code signed — an Apple Developer certificate and a Windows signing
+            certificate both cost money that this project doesn't take in. Nothing is wrong with
+            the download; the OS just can't identify who built it.
+          </p>
+          <ul>
+            <li><strong>macOS:</strong> right-click the app and choose <em>Open</em> the first time.</li>
+            <li>
+              <strong>Windows:</strong> on the SmartScreen prompt, click <em>More info</em> →
+              <em>Run anyway</em>.
+            </li>
+          </ul>
+          <p>
+            If you'd rather not take that on faith, the
+            <a href="https://github.com/moreiraeugenio/keycache">source is public</a> and
+            <code>npm run dist</code> builds the same artifacts locally.
+          </p>
+        </details>
+      </section>
+
+      <section class="faq" aria-labelledby="faq-heading">
+        <h2 id="faq-heading">Questions</h2>
+
+        <h3>Where are my notes stored?</h3>
+        <p>
+          In a plain JSON file on your own machine, at a location you pick in Settings. Nothing is
+          uploaded, because Keycache has no network code — there is no server, no sync and no
+          account. If you want your notes on two machines, point the data file at a folder you
+          already sync.
+        </p>
+
+        <h3>Is it a password manager?</h3>
+        <p>
+          No, and it shouldn't be used as one. Values are stored in plain text, and masking only
+          hides them on screen — it isn't encryption. Keycache is for the strings you retype all
+          day but wouldn't mind a coworker seeing: account numbers, ticket prefixes, a long build
+          command. Real secrets belong in a password manager or your OS keychain.
+        </p>
+
+        <h3>How is it different from Raycast snippets or a clipboard manager?</h3>
+        <p>
+          A clipboard manager remembers what you copied; Keycache stores what you decided to keep,
+          under a name you chose. Compared to snippet features built into larger launchers, the
+          difference is scope and ownership: one small app that does this and nothing else, with
+          your data in a file you can read, move or delete without exporting anything.
+        </p>
+
+        <h3>What does it cost?</h3>
+        <p>
+          Nothing. Keycache is free and open source under GPL-3.0-or-later, with no paid tier, no
+          telemetry and no accounts. This page has no trackers on it either.
+        </p>
+
+        <h3>Which platforms does it run on?</h3>
+        <p>
+          macOS, Windows and Linux. On macOS it lives in the menu bar and installs through
+          Homebrew; on Windows it sits in the notification area; on Linux it ships as an AppImage.
+        </p>
+      </section>
+    </main>
+
+    <footer>
+      <p>
+        <a href="https://github.com/moreiraeugenio/keycache">GitHub</a>
+        <span aria-hidden="true">·</span>
+        <a href="https://github.com/moreiraeugenio/keycache/issues">Report an issue</a>
+        <span aria-hidden="true">·</span>
+        <a href="https://github.com/moreiraeugenio/keycache/blob/main/LICENSE">GPL-3.0-or-later</a>
+      </p>
+      <p class="colophon">
+        Built by <a href="https://github.com/moreiraeugenio">Eugênio Moreira</a>. No trackers on
+        this page.
+      </p>
+    </footer>
+
+    <script src="/downloads.js" defer></script>
+  </body>
+</html>

@@ -26,6 +26,8 @@
     "version:auto": "node scripts/version-bump.mjs",
     "release": "node scripts/release.mjs",
     "release:dry-run": "node scripts/release.mjs --dry-run",
+    "site:assets": "mkdir -p site/assets && cp assets/demo.gif site/assets/demo.gif",
+    "site:images": "node scripts/gen-site-images.mjs",
     "prepare": "husky"
   },
   "devDependencies": {

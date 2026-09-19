@@ -1,0 +1,8 @@
+{
+  "name": "keycache-deploy",
+  "private": true,
+  "description": "Deploy CLIs for .github/workflows/deploy-site.yml, isolated from the app's dependencies",
+  "devDependencies": {
+    "vercel": "^59.23.2"
+  }
+}
