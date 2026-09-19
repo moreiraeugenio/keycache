@@ -1,0 +1,484 @@
+/* ========================================
+   keycache.app — landing page
+   Tokens mirror src/renderer/styles.css so the
+   page and the app read as the same product.
+   ======================================== */
+
+:root {
+  color-scheme: dark;
+
+  --bg-deep: #0f1117;
+  --bg-base: #151821;
+  --bg-elevated: #1c1f2e;
+
+  --glass: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.08);
+
+  --text-primary: #f0f0f2;
+  --text-secondary: #94a3b8;
+  --text-muted: #5a6478;
+
+  --accent: #0d9488;
+  --accent-hover: #0f766e;
+  --accent-glow: rgba(13, 148, 136, 0.25);
+  --accent-subtle: rgba(13, 148, 136, 0.12);
+
+  --border: rgba(255, 255, 255, 0.1);
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.4);
+
+  --transition-fast: 150ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  --gutter: 24px;
+  --measure: 68ch;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light;
+
+    --bg-deep: #f5f5f7;
+    --bg-base: #eeeef0;
+    --bg-elevated: #ffffff;
+
+    --glass: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(0, 0, 0, 0.08);
+
+    --text-primary: #1a1a2e;
+    --text-secondary: #4a5568;
+    --text-muted: #8a93a5;
+
+    --accent-glow: rgba(13, 148, 136, 0.2);
+    --accent-subtle: rgba(13, 148, 136, 0.08);
+
+    --border: rgba(0, 0, 0, 0.1);
+
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.14);
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg-deep);
+  /* Teal wash behind the hero, fading into the flat page background. */
+  background-image: radial-gradient(
+    ellipse 90% 55% at 50% -10%,
+    var(--accent-subtle),
+    transparent 70%
+  );
+  background-repeat: no-repeat;
+  color: var(--text-primary);
+  font-family:
+    'Inter',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  font-size: 16px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+main {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+
+a {
+  color: var(--accent);
+  text-decoration-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  text-underline-offset: 3px;
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--accent-hover);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+code {
+  font-family: ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+  font-size: 0.9em;
+  /* Several monospace faces ligate `--` into an em dash, which makes the brew
+     command look like something you cannot paste. */
+  font-variant-ligatures: none;
+}
+
+kbd {
+  display: inline-block;
+  min-width: 1.6em;
+  padding: 1px 6px;
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  background: var(--glass);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.8em;
+  font-weight: 500;
+  line-height: 1.5;
+  text-align: center;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+/* ---- Hero ---- */
+
+.hero {
+  padding: clamp(64px, 12vw, 112px) 0 clamp(48px, 9vw, 80px);
+  text-align: center;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(2.5rem, 9vw, 3.5rem);
+  font-weight: 700;
+}
+
+.tagline {
+  margin: 12px 0 0;
+  font-size: clamp(1.15rem, 4vw, 1.5rem);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.subtitle {
+  max-width: 52ch;
+  margin: 16px auto 0;
+  color: var(--text-secondary);
+  text-wrap: balance;
+}
+
+.demo {
+  margin: clamp(32px, 6vw, 48px) 0 0;
+}
+
+.demo img {
+  width: 100%;
+  max-width: 340px;
+  height: auto;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+.cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  margin-top: clamp(32px, 6vw, 44px);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  padding: 0 24px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-size: 0.975rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #ffffff;
+  box-shadow: 0 6px 20px var(--accent-glow);
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover);
+  color: #ffffff;
+}
+
+.btn-ghost {
+  border-color: var(--border);
+  background: var(--glass);
+  color: var(--text-primary);
+}
+
+.btn-ghost:hover {
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+.cta-note {
+  margin: 16px 0 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* ---- Prose sections ---- */
+
+section:not(.hero) {
+  padding: clamp(40px, 8vw, 64px) 0;
+  border-top: 1px solid var(--border);
+}
+
+section h2 {
+  margin: 0 0 20px;
+  font-size: clamp(1.4rem, 5vw, 1.75rem);
+  font-weight: 600;
+}
+
+.pitch p {
+  max-width: var(--measure);
+  margin: 0 0 16px;
+  color: var(--text-secondary);
+}
+
+.pitch p:last-child {
+  margin-bottom: 0;
+}
+
+.pitch code {
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: var(--glass);
+  color: var(--text-primary);
+}
+
+/* ---- Features ---- */
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.feature-grid li {
+  padding: 20px;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  background: var(--glass);
+}
+
+.feature-grid h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.feature-grid p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.925rem;
+}
+
+/* ---- Install ---- */
+
+.install h3 {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.install-direct {
+  margin-top: 36px;
+}
+
+.code-copy {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+}
+
+/* The command scrolls inside its own box rather than the row, so the Copy
+   button stays put on narrow screens instead of scrolling out of reach. */
+.code-copy code {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  white-space: nowrap;
+  color: var(--text-primary);
+}
+
+.code-copy button {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--glass);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    border-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.code-copy button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.code-copy button.copied {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.download-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.download-list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: var(--glass);
+}
+
+.download-list li + li {
+  border-top: 1px solid var(--glass-border);
+}
+
+/* Set by downloads.js once the visitor's OS is known. */
+.download-list li.is-current {
+  background: var(--accent-subtle);
+}
+
+.download-list .platform {
+  font-weight: 500;
+}
+
+.download-list .links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 0.925rem;
+}
+
+.version-note {
+  margin: 14px 0 0;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.unsigned {
+  margin-top: 36px;
+  padding: 16px 20px;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  background: var(--glass);
+}
+
+.unsigned summary {
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.unsigned p,
+.unsigned li {
+  color: var(--text-secondary);
+  font-size: 0.925rem;
+}
+
+.unsigned p {
+  max-width: var(--measure);
+}
+
+.unsigned > :nth-child(2) {
+  margin-top: 16px;
+}
+
+.unsigned ul {
+  padding-left: 20px;
+}
+
+.unsigned code {
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+/* ---- Footer ---- */
+
+footer {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 32px var(--gutter) 56px;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+footer p {
+  margin: 0;
+}
+
+footer span {
+  margin: 0 8px;
+}
+
+.colophon {
+  margin-top: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

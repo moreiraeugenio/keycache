@@ -1,0 +1,97 @@
+<!doctype html>
+<!--
+  Source for site/assets/og.png — the 1200x630 card that renders when
+  keycache.app is linked on social sites, Slack, Discord and so on.
+  Rendered to PNG by `npm run site:og`. Edit here, never the PNG.
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+
+      body {
+        width: 1200px;
+        height: 630px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 0 88px;
+        background: #0f1117;
+        background-image: radial-gradient(
+          ellipse 70% 80% at 85% 15%,
+          rgba(13, 148, 136, 0.22),
+          transparent 65%
+        );
+        color: #f0f0f2;
+        font-family: 'Inter', sans-serif;
+        overflow: hidden;
+      }
+
+      /* build/icon.png is a black key on transparency, so it needs a tile
+         and an inversion to be visible on the dark card. */
+      .icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 112px;
+        height: 112px;
+        margin-bottom: 40px;
+        border-radius: 26px;
+        background: #0d9488;
+      }
+
+      .icon img {
+        width: 68px;
+        height: 68px;
+        filter: invert(1);
+      }
+
+      h1 {
+        font-size: 84px;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        line-height: 1;
+      }
+
+      .tagline {
+        margin-top: 24px;
+        font-size: 42px;
+        font-weight: 500;
+        color: #f0f0f2;
+      }
+
+      .subtitle {
+        margin-top: 20px;
+        max-width: 34ch;
+        font-size: 28px;
+        font-weight: 400;
+        line-height: 1.45;
+        color: #94a3b8;
+      }
+
+      .rule {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        height: 10px;
+        background: #0d9488;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="icon"><img src="../build/icon.png" alt="" /></div>
+    <h1>Keycache</h1>
+    <p class="tagline">Key-value notes in your menu bar.</p>
+    <p class="subtitle">Keyboard-first. Values masked. Stored in a file you own.</p>
+    <div class="rule"></div>
+  </body>
+</html>

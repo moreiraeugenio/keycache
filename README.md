@@ -156,6 +156,18 @@ After each tagged release, `.github/workflows/release.yml` opens a PR against [`
 
 Requires the `HOMEBREW_TAP_TOKEN` repo secret — a PAT (classic) with `repo` scope on the tap repo, or a fine-grained token scoped to `moreiraeugenio/homebrew-keycache` with `Contents: write` + `Pull requests: write`.
 
+## Landing page
+
+[keycache.app](https://keycache.app) lives in [`site/`](./site) — plain HTML, CSS and one script, no framework and no build step. `.github/workflows/deploy-site.yml` deploys it to Vercel on every push to `main` that touches `site/`.
+
+```bash
+npm run site:assets   # copy demo.gif in from assets/ (gitignored under site/)
+npx serve site        # preview locally (or: cd site && python3 -m http.server 8000)
+npm run site:images   # re-render the OG card and favicon after editing them
+```
+
+See [`site/README.md`](./site/README.md) for the Vercel project setup and the required secrets.
+
 ## Contributing
 
 ### Commit Message Template
