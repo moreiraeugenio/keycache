@@ -316,6 +316,24 @@ section h2 {
   font-size: 0.925rem;
 }
 
+/* ---- FAQ ---- */
+
+.faq h3 {
+  margin: 28px 0 8px;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.faq h3:first-of-type {
+  margin-top: 0;
+}
+
+.faq p {
+  max-width: var(--measure);
+  margin: 0;
+  color: var(--text-secondary);
+}
+
 /* ---- Install ---- */
 
 .install h3 {

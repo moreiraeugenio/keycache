@@ -34,6 +34,79 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
     />
     <link rel="stylesheet" href="/styles.css" />
+
+    <!--
+      Structured data. These are data blocks, not executable scripts, so the
+      page's script-src CSP does not apply to them. Keep the FAQ entries in
+      sync with the visible copy below — a mismatch is a manual-action risk,
+      not a clever trick.
+    -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Keycache",
+        "description": "A menu bar app for the strings you retype all day. Keyboard-first, values masked, stored in a plain JSON file on your machine. No cloud, no account.",
+        "url": "https://keycache.app/",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "macOS, Windows, Linux",
+        "downloadUrl": "https://github.com/moreiraeugenio/keycache/releases/latest",
+        "softwareHelp": "https://github.com/moreiraeugenio/keycache",
+        "license": "https://www.gnu.org/licenses/gpl-3.0.html",
+        "isAccessibleForFree": true,
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "author": { "@type": "Person", "name": "Eug\u00eanio Moreira" }
+      }
+    </script>
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Where are my notes stored?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "In a plain JSON file on your own machine, at a location you pick in Settings. Nothing is uploaded, because Keycache has no network code \u2014 there is no server, no sync and no account. If you want your notes on two machines, point the data file at a folder you already sync."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is it a password manager?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No, and it shouldn't be used as one. Values are stored in plain text, and masking only hides them on screen \u2014 it isn't encryption. Keycache is for the strings you retype all day but wouldn't mind a coworker seeing: account numbers, ticket prefixes, a long build command. Real secrets belong in a password manager or your OS keychain."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How is it different from Raycast snippets or a clipboard manager?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "A clipboard manager remembers what you copied; Keycache stores what you decided to keep, under a name you chose. Compared to snippet features built into larger launchers, the difference is scope and ownership: one small app that does this and nothing else, with your data in a file you can read, move or delete without exporting anything."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What does it cost?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Nothing. Keycache is free and open source under GPL-3.0-or-later, with no paid tier, no telemetry and no accounts. This page has no trackers on it either."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Which platforms does it run on?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "macOS, Windows and Linux. On macOS it lives in the menu bar and installs through Homebrew; on Windows it sits in the notification area; on Linux it ships as an AppImage."
+            }
+          }
+        ]
+      }
+    </script>
   </head>
 
   <body>
@@ -192,6 +265,46 @@
             <code>npm run dist</code> builds the same artifacts locally.
           </p>
         </details>
+      </section>
+
+      <section class="faq" aria-labelledby="faq-heading">
+        <h2 id="faq-heading">Questions</h2>
+
+        <h3>Where are my notes stored?</h3>
+        <p>
+          In a plain JSON file on your own machine, at a location you pick in Settings. Nothing is
+          uploaded, because Keycache has no network code — there is no server, no sync and no
+          account. If you want your notes on two machines, point the data file at a folder you
+          already sync.
+        </p>
+
+        <h3>Is it a password manager?</h3>
+        <p>
+          No, and it shouldn't be used as one. Values are stored in plain text, and masking only
+          hides them on screen — it isn't encryption. Keycache is for the strings you retype all
+          day but wouldn't mind a coworker seeing: account numbers, ticket prefixes, a long build
+          command. Real secrets belong in a password manager or your OS keychain.
+        </p>
+
+        <h3>How is it different from Raycast snippets or a clipboard manager?</h3>
+        <p>
+          A clipboard manager remembers what you copied; Keycache stores what you decided to keep,
+          under a name you chose. Compared to snippet features built into larger launchers, the
+          difference is scope and ownership: one small app that does this and nothing else, with
+          your data in a file you can read, move or delete without exporting anything.
+        </p>
+
+        <h3>What does it cost?</h3>
+        <p>
+          Nothing. Keycache is free and open source under GPL-3.0-or-later, with no paid tier, no
+          telemetry and no accounts. This page has no trackers on it either.
+        </p>
+
+        <h3>Which platforms does it run on?</h3>
+        <p>
+          macOS, Windows and Linux. On macOS it lives in the menu bar and installs through
+          Homebrew; on Windows it sits in the notification area; on Linux it ships as an AppImage.
+        </p>
       </section>
     </main>
 

@@ -42,6 +42,29 @@ for an hour to stay well under the unauthenticated rate limit.
 Every link in `index.html` already points at the releases page, so the page
 degrades to something useful if the script fails, is blocked, or never runs.
 
+## Discoverability
+
+- `robots.txt` allows everything, and names the AI crawlers (`GPTBot`,
+  `ClaudeBot`, `PerplexityBot`, `Google-Extended`, `OAI-SearchBot`) explicitly so
+  that allowing them reads as a decision. Blocking them would keep Keycache out
+  of AI answers without helping its search ranking.
+- `sitemap.xml` lists the one page, with no `<lastmod>` — a hand-maintained date
+  that goes stale is worse than none.
+- Two `application/ld+json` blocks in `index.html`: `SoftwareApplication` and
+  `FAQPage`. These are data blocks rather than executable scripts, so the page's
+  `script-src` CSP doesn't apply to them.
+
+**If you edit the FAQ copy, edit the `FAQPage` block to match.** Structured data
+that disagrees with the visible page is a manual-action risk, not a clever
+trick.
+
+What this file can't do is the part that actually matters: a new domain gets
+indexed because other indexed pages link to it. The repo's homepage field, the
+README, the Homebrew tap and awesome-list entries are worth more than everything
+above combined — see [#61](https://github.com/moreiraeugenio/keycache/issues/61).
+Verifying the domain in Google Search Console and submitting the URL is the
+fastest way onto the index.
+
 ## Vercel setup
 
 One-time, on the account that owns the project:
