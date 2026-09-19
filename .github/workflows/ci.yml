@@ -55,6 +55,12 @@ jobs:
       # download is needed since the tests launch Electron's own binary.
       - run: npx playwright install-deps chromium
 
+      # electron's npm package ships no postinstall, so the ~180 MB binary is
+      # fetched on first require. Left to the test run, both Playwright workers
+      # race that same lazy download and one execs a half-written binary
+      # (spawn ETXTBSY). Fetch it once up front instead.
+      - run: node -e "require('electron')"
+
       # The app is a tray popup driving a real window, so there is no headless
       # mode to fall back on — give it a virtual display instead.
       - run: xvfb-run --auto-servernum npm run test:e2e

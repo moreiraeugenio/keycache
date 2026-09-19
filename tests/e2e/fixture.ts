@@ -20,16 +20,26 @@ export interface LaunchOptions {
   tmpDir?: string;
 }
 
+// Linux CI runs as a non-root user under xvfb with no window manager. Two
+// things break there, neither of which these tests are meant to cover:
+// Electron's setuid sandbox helper isn't configured and refuses to start, and
+// Chromium treats an unmapped window as occluded and throttles its rendering,
+// so Playwright's "visible, enabled and stable" check never settles. Relax
+// both on Linux; macOS and Windows launch exactly as before.
+const linuxArgs = [
+  '--no-sandbox',
+  '--disable-backgrounding-occluded-windows',
+  '--disable-renderer-backgrounding',
+  '--disable-background-timer-throttling',
+];
+
 export async function launchApp(opts: LaunchOptions = {}): Promise<LaunchedApp> {
   const tmpDir = opts.tmpDir ?? fs.mkdtempSync(path.join(os.tmpdir(), 'keycache-e2e-'));
   const dataFilePath = opts.dataFilePath ?? path.join(tmpDir, 'notes.json');
   const settingsFilePath = opts.settingsFilePath ?? path.join(tmpDir, 'settings.json');
 
   const app = await electron.launch({
-    // Linux CI runs as a non-root user under xvfb, where Electron's setuid
-    // sandbox helper isn't configured and refuses to start. The sandbox isn't
-    // what these tests cover, so drop it there and leave macOS/Windows alone.
-    args: process.platform === 'linux' ? [projectRoot, '--no-sandbox'] : [projectRoot],
+    args: process.platform === 'linux' ? [projectRoot, ...linuxArgs] : [projectRoot],
     env: {
       ...process.env,
       NODE_ENV: 'test',
