@@ -158,6 +158,14 @@ h3 {
   text-align: center;
 }
 
+.logo {
+  width: 72px;
+  height: 72px;
+  margin-bottom: 20px;
+  border-radius: 18px;
+  box-shadow: 0 8px 28px var(--accent-glow);
+}
+
 .hero h1 {
   margin: 0;
   font-size: clamp(2.5rem, 9vw, 3.5rem);
