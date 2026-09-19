@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version-file: '.nvmrc'
+          cache: npm
+
+      # Fails on unresolvable peer dependencies, which is how a broken
+      # Dependabot bump would otherwise slip through to main.
+      - run: npm ci
+
+      - run: npm run lint
+
+      # Enforces the 100% coverage thresholds in vitest.config.ts.
+      - run: npm run test:coverage
+
+      - run: npm run build
