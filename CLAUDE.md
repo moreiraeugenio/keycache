@@ -70,7 +70,7 @@ site/                       # keycache.app landing page — no framework, no bui
   index.html                # The single page
   styles.css                # Tokens mirrored from src/renderer/styles.css
   downloads.js              # Resolves latest-release asset URLs + OS detection
-  vercel.json               # Static config: cleanUrls, cache + security headers
+  vercel.json               # Static config: trailingSlash, cache + security headers
   assets/                   # og.png + icon.png committed; demo.gif copied in
 scripts/
   version-bump.mjs          # Conventional-Commit → bump level
