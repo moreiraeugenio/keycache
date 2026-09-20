@@ -90,5 +90,8 @@ jobs:
       - name: Build with Vercel
         run: vercel build --prod --token=$VERCEL_TOKEN
 
+      # --yes sets skipAutoDetectionConfirmation=1 on the create-deployment
+      # call. Without it the API treats a project that has never been deployed
+      # as new and rejects the payload for not carrying full projectSettings.
       - name: Deploy prebuilt
-        run: vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN
+        run: vercel deploy --prebuilt --prod --yes --token=$VERCEL_TOKEN
