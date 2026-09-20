@@ -76,7 +76,7 @@ if (local !== remote) {
 }
 
 // Resume support: if a prior run created the bump commit + tag locally
-// but the push didn't deliver the tag (e.g. pre-push E2E flaked and the
+// but the push didn't deliver the tag (e.g. the network dropped and the
 // user recovered with a tag-less push), the tag is sitting unpushed at
 // HEAD. Detect that and finish the release — skipping the slow checks
 // that already passed on the prior run.
@@ -145,6 +145,8 @@ if (existsSync(fwDir) && !fwLinkPresent) {
   abort('electron extract missing — framework directory not created')
 }
 
+// E2E runs here and nowhere else locally — CI covers every push, and this
+// is the one deliberate pre-release run on the developer's own platform.
 step('Lint + unit tests + build + E2E')
 run('npm run lint')
 run('npm run test')
