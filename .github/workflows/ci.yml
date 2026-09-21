@@ -35,11 +35,16 @@ jobs:
       - run: npm run build
 
   # E2E lives here rather than in a pre-push hook: it is the only thing that
-  # drives the real app, and ubuntu-latest is a platform we ship a build for
-  # but never exercise locally (development is macOS).
+  # drives the real app, and it is the only place any platform other than the
+  # developer's macOS gets exercised at all. All three shipped platforms run,
+  # so the release PR is verified everywhere before it is merged and tagged.
   e2e:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7.0.1
 
@@ -53,23 +58,27 @@ jobs:
       # Electron needs the same shared libraries Chromium does, and the runner
       # image doesn't carry all of them. Playwright knows the list; no browser
       # download is needed since the tests launch Electron's own binary.
-      - run: npx playwright install-deps chromium
-
-      # electron's npm package ships no postinstall, so the ~180 MB binary is
-      # fetched on first require. Left to the test run, both Playwright workers
-      # race that same lazy download and one execs a half-written binary
-      # (spawn ETXTBSY). Fetch it once up front instead.
-      - run: node -e "require('electron')"
+      - name: Install Electron's shared libraries
+        if: runner.os == 'Linux'
+        run: npx playwright install-deps chromium
 
       # The app is a tray popup driving a real window, so there is no headless
-      # mode to fall back on — give it a virtual display instead.
-      - run: xvfb-run --auto-servernum npm run test:e2e
+      # mode to fall back on — give it a virtual display. macOS and Windows
+      # runners have a real one. (npm's pretest:e2e hook fetches Electron's
+      # binary up front on every platform; see scripts/prefetch-electron.mjs.)
+      - name: Run E2E under a virtual display
+        if: runner.os == 'Linux'
+        run: xvfb-run --auto-servernum npm run test:e2e
+
+      - name: Run E2E
+        if: runner.os != 'Linux'
+        run: npm run test:e2e
 
       # retries: 2 with trace: 'on-first-retry' means a failure that survives
       # its retries leaves a trace worth downloading.
       - uses: actions/upload-artifact@v7.0.1
         if: failure()
         with:
-          name: playwright-traces
+          name: playwright-traces-${{ matrix.os }}
           path: test-results/
           retention-days: 7
