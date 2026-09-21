@@ -1,0 +1,58 @@
+name: Open release PR
+
+# Step one of the release, run by hand when you decide a release is due.
+# It opens (or refreshes) a "chore(main): release X.Y.Z" pull request carrying
+# the version bump and the CHANGELOG entry for every commit since the last tag.
+# Nothing is tagged or published here — merging that PR is what releases, and
+# release.yml takes over from there.
+#
+# Deliberately not run on every push to main: a standing, self-reopening
+# release PR is noise in a repo this size, and dispatching is the explicit
+# "start a release" signal that `npm run release` used to be.
+#
+# Commits pushed after the PR is opened are NOT picked up automatically — the
+# version and changelog freeze at dispatch time. Re-dispatch to refresh the
+# existing PR before merging if more work has landed.
+on:
+  workflow_dispatch:
+    inputs:
+      release-as:
+        description: 'Force a version (e.g. 1.0.0). Leave empty to derive it from the commits.'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: release-pr
+  cancel-in-progress: false
+
+jobs:
+  release-pr:
+    runs-on: ubuntu-latest
+    steps:
+      # Bump level comes from the Conventional Commit prefixes, the same rules
+      # the old scripts/version-bump.mjs applied: feat!/fix!/BREAKING CHANGE →
+      # major, feat → minor, everything else → patch.
+      - uses: googleapis/release-please-action@v5.0.0
+        id: release
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+          # This workflow only manages the PR; release.yml does the tagging.
+          skip-github-release: true
+          release-as: ${{ inputs.release-as }}
+
+      - name: Summarise
+        env:
+          PRS: ${{ steps.release.outputs.prs }}
+        run: |
+          if [ -n "$PRS" ] && [ "$PRS" != "[]" ]; then
+            echo "$PRS" | jq -r --arg repo "$GITHUB_REPOSITORY" \
+              '.[] | "## \(.title)\n\nhttps://github.com/\($repo)/pull/\(.number)\n\nMerge it to cut the release."' \
+              >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No release PR opened — no releasable commits since the last tag." >> "$GITHUB_STEP_SUMMARY"
+          fi

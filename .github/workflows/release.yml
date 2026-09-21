@@ -1,16 +1,58 @@
 name: Release
 
+# Step two of the release, and fully automatic. release-pr.yml opens the
+# "chore(main): release X.Y.Z" pull request by hand; merging it is the release
+# decision, and this workflow is what that merge triggers: release-please tags
+# the merge commit, the three runners build their native artifacts, and the
+# draft release is filled in and published.
+#
+# It runs on every push to main but is a no-op — a few seconds — unless the
+# pushed commit is a merged release PR. The tagging half cannot be manual:
+# release-please only recognises a merged release PR while looking at a push
+# to main, so a dispatch-only design would leave PRs merged but never tagged.
+#
+# One workflow, deliberately: a tag pushed with GITHUB_TOKEN does not fire
+# `on: push: tags`, so splitting the build out would require a PAT.
+#
+# The release PR is an ordinary pull request, so ci.yml has already run lint,
+# unit tests, build and E2E on all three platforms against this exact tree.
+# That is what the local `npm run release` guards used to buy.
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: write
+  pull-requests: write
+
+# Never cancel a release in flight: a cancelled run leaves a tag and a draft
+# release with no artifacts attached to it.
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      released: ${{ steps.release.outputs.release_created }}
+      tag: ${{ steps.release.outputs.tag_name }}
+      version: ${{ steps.release.outputs.version }}
+    steps:
+      # Tags and creates the release when the pushed commit is a merged
+      # release PR; does nothing otherwise. PR management belongs to
+      # release-pr.yml, so it is skipped here.
+      - uses: googleapis/release-please-action@v5.0.0
+        id: release
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+          skip-github-pull-request: true
+
   build:
+    needs: release-please
+    if: needs.release-please.outputs.released == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -18,6 +60,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7.0.1
+        with:
+          # Build the tagged commit, not whatever main points at by the time
+          # this job starts.
+          ref: ${{ needs.release-please.outputs.tag }}
 
       - uses: actions/setup-node@v7.0.0
         with:
@@ -41,9 +87,8 @@ jobs:
             dist/*.AppImage
           if-no-files-found: ignore
 
-  release:
-    needs: build
-    if: startsWith(github.ref, 'refs/tags/v')
+  publish:
+    needs: [release-please, build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v8.0.1
@@ -51,24 +96,26 @@ jobs:
           path: dist
           merge-multiple: true
 
-      - uses: softprops/action-gh-release@v3.0.3
-        with:
-          files: dist/*
-          generate_release_notes: true
+      # release-please creates the release as a draft (see
+      # release-please-config.json) so that a release is never visible without
+      # its binaries — the tag exists minutes before the builds finish. Attach
+      # the artifacts first, then publish.
+      - name: Attach artifacts and publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.release-please.outputs.tag }}
+        run: |
+          gh release upload "$TAG" dist/* --clobber --repo "$GITHUB_REPOSITORY"
+          gh release edit "$TAG" --draft=false --repo "$GITHUB_REPOSITORY"
 
   homebrew-bump:
-    needs: release
-    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [release-please, publish]
     runs-on: ubuntu-latest
     steps:
-      - id: version
-        name: Resolve version
-        run: echo "value=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
-
       - id: shasums
         name: Compute dmg sha256
         env:
-          VERSION: ${{ steps.version.outputs.value }}
+          VERSION: ${{ needs.release-please.outputs.version }}
         run: |
           BASE="https://github.com/${{ github.repository }}/releases/download/v$VERSION"
           arm_sha=$(curl -fsSL "$BASE/Keycache-$VERSION-arm64.dmg" | sha256sum | awk '{print $1}')
@@ -90,7 +137,7 @@ jobs:
       - name: Update cask
         working-directory: tap
         env:
-          VERSION: ${{ steps.version.outputs.value }}
+          VERSION: ${{ needs.release-please.outputs.version }}
           ARM_SHA: ${{ steps.shasums.outputs.arm_sha }}
           X64_SHA: ${{ steps.shasums.outputs.x64_sha }}
         run: |
@@ -103,8 +150,8 @@ jobs:
         with:
           path: tap
           token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
-          commit-message: "keycache ${{ steps.version.outputs.value }}"
-          branch: bump-keycache-${{ steps.version.outputs.value }}
-          title: "keycache ${{ steps.version.outputs.value }}"
+          commit-message: "keycache ${{ needs.release-please.outputs.version }}"
+          branch: bump-keycache-${{ needs.release-please.outputs.version }}
+          title: "keycache ${{ needs.release-please.outputs.version }}"
           body: |
-            Auto-bump from [moreiraeugenio/keycache@${{ github.ref_name }}](https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}).
+            Auto-bump from [moreiraeugenio/keycache@${{ needs.release-please.outputs.tag }}](https://github.com/${{ github.repository }}/releases/tag/${{ needs.release-please.outputs.tag }}).

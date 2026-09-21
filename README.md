@@ -84,10 +84,6 @@ The window starts hidden — look for the Keycache icon in the menu bar / system
 | `npm run package` | Build + package unpacked app to `dist/` |
 | `npm run package:dev` | Like `package`, but as "Keycache Dev" with appId `com.keycache.dev` (side-by-side with a prod install) |
 | `npm run dist` | Build + create distributable installer to `dist/` |
-| `npm run version:preview` | Show the bump level picked from commits since the last tag (dry run) |
-| `npm run version:auto` | Bump `package.json` + tag based on commits since the last tag |
-| `npm run release` | Full release flow: sync, checks, bump, push (one command) |
-| `npm run release:dry-run` | Run all checks and the bump preview, stop before mutating anything |
 
 ## Releases
 
@@ -95,26 +91,26 @@ Releases are built and published via GitHub Actions (`.github/workflows/release.
 
 ### Cutting a release
 
-The fast path — one command that does everything:
+Nothing runs locally. A release is two steps, both on GitHub:
 
-```bash
-npm run release
-```
+**1. Open the release PR.** Run the **Open release PR** workflow (`.github/workflows/release-pr.yml`) from the Actions tab. [release-please](https://github.com/googleapis/release-please) opens a `chore(main): release X.Y.Z` pull request carrying the `package.json` version bump and the `CHANGELOG.md` entry for every commit since the last tag. An optional `release-as` input forces a specific version instead of deriving one.
 
-It runs these checks in order, aborting on the first failure:
+**2. Merge it.** Merging that PR *is* the release — until then nothing is tagged and nothing is published.
 
-1. On the `main` branch
-2. Working tree is clean (no uncommitted changes)
-3. Fast-forward with `origin/main` (pulls if behind; aborts if diverged or ahead)
-4. Local Node matches `.nvmrc`
-5. `npm ci`
-6. `npm run lint && npm run test && npm run build`
+The merge triggers `release.yml`, which runs end to end in a single Actions run:
 
-Then it previews the bump (same rules as `npm run version:preview`) and asks for a single `[y/N]` confirmation before running `npm version <level> -m "chore: release v%s"`, `git push origin main`, and `git push --tags`.
+1. release-please tags the merge commit (`vX.Y.Z`) and creates the GitHub Release as a **draft**
+2. `macos-latest` / `windows-latest` / `ubuntu-latest` build their native artifacts in parallel
+3. The artifacts are attached to the release, which is then published
+4. A cask-bump PR is opened against the Homebrew tap
 
-Pushing the `v*` tag triggers the workflow. Each of the three OS runners builds its native artifacts in parallel on `macos-latest` / `windows-latest` / `ubuntu-latest`; a final job collects them and **publishes** a GitHub Release with auto-generated notes, visible to the public immediately.
+The release is drafted rather than published up front so it is never visible without its binaries — the tag exists for the few minutes the builds take.
 
-Run `npm run release:dry-run` to exercise every guard and see the bump preview without mutating anything.
+Because the release PR is an ordinary pull request, `ci.yml` runs against it first: lint, unit tests with coverage, build, and E2E on all three platforms. A release can only be cut from a tree that has passed all of them.
+
+> **Commits that land after the PR is opened are not picked up.** The version and changelog freeze at dispatch time. If more work merges before you release, re-run **Open release PR** — it refreshes the existing PR in place.
+
+### Choosing the version
 
 The bump level comes from [Conventional Commit](https://www.conventionalcommits.org) prefixes since the last tag, mapped to [semver](https://semver.org):
 
@@ -122,7 +118,7 @@ The bump level comes from [Conventional Commit](https://www.conventionalcommits.
 - **minor** — new feature, backwards-compatible (`feat:`)
 - **major** — breaking change (any type with `!` like `feat!:` / `fix!:`, or a `BREAKING CHANGE:` footer)
 
-The highest-severity match across all commits since the last tag wins.
+The highest-severity match across all commits since the last tag wins. To see the level release-please picked, read the title of the open release PR — it is recomputed on every push to `main`.
 
 #### Manual fallback
 
