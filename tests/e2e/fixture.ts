@@ -20,23 +20,18 @@ export interface LaunchOptions {
   tmpDir?: string;
 }
 
-// Chromium stops producing frames for a window it considers occluded, and
-// Playwright's "visible, enabled and stable" check waits for two matching
-// animation frames — so a click on a throttled window never lands. Every
-// platform can hit this. Two workers launch popups at the identical
-// tray-anchored position, and on Windows the foreground lock keeps a
-// background-launched window from raising itself, so a fresh window can start
-// life fully covered by the other worker's. On Linux under xvfb, with no window
-// manager, an unmapped window counts as occluded outright.
-const renderArgs = [
+// Linux CI runs as a non-root user under xvfb with no window manager. Two
+// things break there, neither of which these tests are meant to cover:
+// Electron's setuid sandbox helper isn't configured and refuses to start, and
+// Chromium treats an unmapped window as occluded and throttles its rendering,
+// so Playwright's "visible, enabled and stable" check never settles. Relax
+// both on Linux; macOS and Windows launch exactly as before.
+const linuxArgs = [
+  '--no-sandbox',
   '--disable-backgrounding-occluded-windows',
   '--disable-renderer-backgrounding',
   '--disable-background-timer-throttling',
 ];
-
-// Linux CI also runs as a non-root user, and Electron's setuid sandbox helper
-// isn't configured there and refuses to start.
-const platformArgs = process.platform === 'linux' ? ['--no-sandbox', ...renderArgs] : renderArgs;
 
 export async function launchApp(opts: LaunchOptions = {}): Promise<LaunchedApp> {
   const tmpDir = opts.tmpDir ?? fs.mkdtempSync(path.join(os.tmpdir(), 'keycache-e2e-'));
@@ -44,7 +39,7 @@ export async function launchApp(opts: LaunchOptions = {}): Promise<LaunchedApp> 
   const settingsFilePath = opts.settingsFilePath ?? path.join(tmpDir, 'settings.json');
 
   const app = await electron.launch({
-    args: [projectRoot, ...platformArgs],
+    args: process.platform === 'linux' ? [projectRoot, ...linuxArgs] : [projectRoot],
     env: {
       ...process.env,
       NODE_ENV: 'test',
