@@ -76,7 +76,7 @@ jobs:
 
       # retries: 2 with trace: 'on-first-retry' means a failure that survives
       # its retries leaves a trace worth downloading.
-      - uses: actions/upload-artifact@v7.0.1
+      - uses: actions/upload-artifact@v7.0.2
         if: failure()
         with:
           name: playwright-traces-${{ matrix.os }}
