@@ -1,9 +1,30 @@
 name: CI
 
+# Skip CI when nothing the app is built or tested from changed: docs, the
+# landing page, README assets, and other workflows. Patterns are evaluated in
+# order, so ci.yml is re-included after the workflows directory is excluded.
+# Safe because main has no required status checks; if any are added, a
+# skipped run would leave them pending and block the merge.
 on:
   pull_request:
+    paths:
+      - '**'
+      - '!**.md'
+      - '!site/**'
+      - '!assets/**'
+      - '!.github/deploy/**'
+      - '!.github/workflows/**'
+      - '.github/workflows/ci.yml'
   push:
     branches: [main]
+    paths:
+      - '**'
+      - '!**.md'
+      - '!site/**'
+      - '!assets/**'
+      - '!.github/deploy/**'
+      - '!.github/workflows/**'
+      - '.github/workflows/ci.yml'
 
 permissions:
   contents: read
