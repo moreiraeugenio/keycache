@@ -93,7 +93,7 @@ Releases are built and published via GitHub Actions (`.github/workflows/release.
 
 Nothing runs locally. A release is two steps, both on GitHub:
 
-**1. Open the release PR.** Run the **Open release PR** workflow (`.github/workflows/release-pr.yml`) from the Actions tab. [release-please](https://github.com/googleapis/release-please) opens a `chore(main): release X.Y.Z` pull request carrying the `package.json` version bump and the `CHANGELOG.md` entry for every commit since the last tag. An optional `release-as` input forces a specific version instead of deriving one.
+**1. Open the release PR.** Run the **Open release PR** workflow (`.github/workflows/open-release-pr.yml`) from the Actions tab. [release-please](https://github.com/googleapis/release-please) opens a `chore(main): release X.Y.Z` pull request carrying the `package.json` version bump and the `CHANGELOG.md` entry for every commit since the last tag. An optional `release-as` input forces a specific version instead of deriving one.
 
 **2. Merge it.** Merging that PR *is* the release — until then nothing is tagged and nothing is published.
 
