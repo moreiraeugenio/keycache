@@ -20,6 +20,11 @@ updates:
     groups:
       dev-dependencies:
         dependency-type: development
+        # Electron ships inside the app, so its updates get their own PR and
+        # their own line under "Dependencies" in the changelog instead of
+        # disappearing into the grouped tooling bump.
+        exclude-patterns:
+          - electron
         update-types:
           - minor
           - patch
