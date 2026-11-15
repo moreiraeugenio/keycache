@@ -1,6 +1,6 @@
 name: Release
 
-# Step two of the release, and fully automatic. release-pr.yml opens the
+# Step two of the release, and fully automatic. open-release-pr.yml opens the
 # "chore(main): release X.Y.Z" pull request by hand; merging it is the release
 # decision, and this workflow is what that merge triggers: release-please tags
 # the merge commit, the three runners build their native artifacts, and the
@@ -42,7 +42,7 @@ jobs:
     steps:
       # Tags and creates the release when the pushed commit is a merged
       # release PR; does nothing otherwise. PR management belongs to
-      # release-pr.yml, so it is skipped here.
+      # open-release-pr.yml, so it is skipped here.
       - uses: googleapis/release-please-action@v5.0.0
         id: release
         with:
