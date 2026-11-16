@@ -12,7 +12,7 @@ on:
       - '!**.md'
       - '!site/**'
       - '!assets/**'
-      - '!.github/deploy/**'
+      - '!deploy/**'
       - '!.github/workflows/**'
       - '.github/workflows/ci.yml'
   push:
@@ -22,7 +22,7 @@ on:
       - '!**.md'
       - '!site/**'
       - '!assets/**'
-      - '!.github/deploy/**'
+      - '!deploy/**'
       - '!.github/workflows/**'
       - '.github/workflows/ci.yml'
 

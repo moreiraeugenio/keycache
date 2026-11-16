@@ -10,7 +10,7 @@ on:
     paths:
       - 'site/**'
       - 'assets/demo.gif'
-      - '.github/deploy/**'
+      - 'deploy/**'
       - '.github/workflows/deploy-site.yml'
   workflow_dispatch:
 
@@ -65,18 +65,18 @@ jobs:
         with:
           node-version-file: '.nvmrc'
           cache: npm
-          cache-dependency-path: .github/deploy/package-lock.json
+          cache-dependency-path: deploy/package-lock.json
 
-      # The Vercel CLI is pinned in .github/deploy/package.json rather than the
+      # The Vercel CLI is pinned in deploy/package.json rather than the
       # app's package.json, so app contributors never install it and it stays
       # out of the Vercel project root. Dependabot tracks it — see
       # .github/dependabot.yml.
       - name: Install pinned deploy CLI
-        working-directory: .github/deploy
+        working-directory: deploy
         run: npm ci
 
       - name: Expose deploy CLI on PATH
-        run: echo "$GITHUB_WORKSPACE/.github/deploy/node_modules/.bin" >> "$GITHUB_PATH"
+        run: echo "$GITHUB_WORKSPACE/deploy/node_modules/.bin" >> "$GITHUB_PATH"
 
       # demo.gif is copied from the repo's canonical assets/ rather than
       # duplicated in git. site/assets/og.png and icon.png are committed.
