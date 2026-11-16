@@ -32,7 +32,7 @@ updates:
   # Vercel CLI used by .github/workflows/deploy-site.yml. Kept out of the app's
   # package.json so contributors don't install it to work on the app.
   - package-ecosystem: npm
-    directory: /.github/deploy
+    directory: /deploy
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
