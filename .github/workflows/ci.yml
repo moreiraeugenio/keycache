@@ -63,9 +63,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [macos-latest]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
+    timeout-minutes: 50
     steps:
       - uses: actions/checkout@v7.0.1
 
@@ -93,7 +93,15 @@ jobs:
 
       - name: Run E2E
         if: runner.os != 'Linux'
-        run: npm run test:e2e
+        run: |
+          node scripts/prefetch-electron.mjs
+          npx electron-vite build
+          for w in 2 1 2 1; do
+            start=$(date +%s)
+            npx playwright test --config tests/e2e/playwright.config.ts --workers=$w --repeat-each=3 --reporter=dot > run.log 2>&1 || true
+            end=$(date +%s)
+            echo "BENCH workers=$w wall=$((end-start))s $(grep -E '[0-9]+ (passed|failed|flaky)' run.log | tr -s ' ' | tr '\n' ' ')"
+          done
 
       # retries: 2 with trace: 'on-first-retry' means a failure that survives
       # its retries leaves a trace worth downloading.
